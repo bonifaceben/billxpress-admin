@@ -15,9 +15,23 @@ const navSections = [
     heading: 'Services',
     items: [
       { to: '/services/data-plans', label: 'Data Plans' },
+      { to: '/services/data-plan-management', label: 'Plan Management' },
       { to: '/services/data-settings', label: 'Data Settings' },
       { to: '/services/airtime-settings', label: 'Airtime Settings' },
       { to: '/services/social-growth-settings', label: 'Social Growth' },
+      { to: '/services/card-settings', label: 'Card Settings' },
+    ],
+  },
+  {
+    heading: 'Cards',
+    items: [
+      { to: '/cards', label: 'Virtual Cards' },
+    ],
+  },
+  {
+    heading: 'Finance',
+    items: [
+      { to: '/funding/settings', label: 'Funding & Transfers' },
     ],
   },
 ];

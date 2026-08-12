@@ -20,6 +20,10 @@ const MVP_VENDOR_TIERS = [
   { minCost: 6001, maxCost: null, markupPercent: 2  },
 ];
 
+// ─── constants ───────────────────────────────────────────────────────────────
+
+const NETWORKS = ['MTN', 'AIRTEL', 'GLO', '9MOBILE'];
+
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
 function formatCost(value) {
@@ -35,6 +39,12 @@ function settingsToForm(s) {
   return {
     isEnabled: s.isEnabled ?? true,
     activeProvider: s.activeProvider ?? '',
+    networkProviders: {
+      MTN: s.networkProviders?.MTN ?? '',
+      AIRTEL: s.networkProviders?.AIRTEL ?? '',
+      GLO: s.networkProviders?.GLO ?? '',
+      '9MOBILE': s.networkProviders?.['9MOBILE'] ?? '',
+    },
     userMarkupPercent: s.userMarkupPercent ?? 15,
     vendorMarkupPercent: s.vendorMarkupPercent ?? 10,
     roundingMode: s.roundingMode ?? 'ceil',
@@ -153,6 +163,28 @@ function ViewMode({ settings, onEdit }) {
         </div>
       </div>
 
+      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <h3 className="mb-1 font-semibold text-gray-900">Network Routing</h3>
+        <p className="mb-4 text-xs text-gray-400">
+          Per-network provider overrides. Networks without an override use the global active provider.
+        </p>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {NETWORKS.map((network) => {
+            const provider = settings.networkProviders?.[network];
+            return (
+              <div key={network} className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">{network}</p>
+                {provider ? (
+                  <p className="mt-1 text-sm font-semibold text-orange-600">{provider}</p>
+                ) : (
+                  <p className="mt-1 text-xs text-gray-400">global fallback</p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <PricingTiersTable label="User Pricing Tiers" tiers={settings.userPricingTiers} fallbackMarkup={settings.userMarkupPercent} />
         <PricingTiersTable label="Vendor Pricing Tiers" tiers={settings.vendorPricingTiers} fallbackMarkup={settings.vendorMarkupPercent} />
@@ -194,6 +226,12 @@ function EditMode({ initialForm, availableProviders, onSave, onCancel }) {
         markupPercent: Number(t.markupPercent) || 0,
       }));
 
+    // build networkProviders — only include if at least one network has an explicit provider
+    const networkProviders = {};
+    for (const [network, provider] of Object.entries(form.networkProviders ?? {})) {
+      if (provider) networkProviders[network] = provider;
+    }
+
     const payload = {
       isEnabled: form.isEnabled,
       activeProvider: form.activeProvider,
@@ -203,6 +241,11 @@ function EditMode({ initialForm, availableProviders, onSave, onCancel }) {
       userPricingTiers: sanitise(form.userPricingTiers),
       vendorPricingTiers: sanitise(form.vendorPricingTiers),
     };
+
+    // only attach networkProviders when there is something to set
+    if (Object.keys(networkProviders).length > 0) {
+      payload.networkProviders = networkProviders;
+    }
 
     try {
       await onSave(payload);
@@ -217,6 +260,12 @@ function EditMode({ initialForm, availableProviders, onSave, onCancel }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {error && (
+        <div className="rounded-md bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+          {error}
+        </div>
+      )}
+
       {/* Basic settings */}
       <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
         <h3 className="mb-4 font-semibold text-gray-900">General Settings</h3>
@@ -271,6 +320,35 @@ function EditMode({ initialForm, availableProviders, onSave, onCancel }) {
               <span className="ml-1 text-xs text-gray-400">(used when no tier matches)</span>
             </label>
             <input type="number" min="0" max="100" value={form.vendorMarkupPercent} onChange={(e) => set('vendorMarkupPercent', e.target.value)} className={inputCls} />
+          </div>
+        </div>
+
+        {/* networkProviders */}
+        <div className="mt-5 border-t border-gray-100 pt-5">
+          <p className="mb-1 text-sm font-medium text-gray-700">Network Provider Overrides</p>
+          <p className="mb-3 text-xs text-gray-400">
+            Route each network to a specific provider. Leave blank to use the global active provider above.
+          </p>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {NETWORKS.map((network) => (
+              <div key={network}>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  {network}
+                </label>
+                <select
+                  value={form.networkProviders[network] ?? ''}
+                  onChange={(e) =>
+                    set('networkProviders', { ...form.networkProviders, [network]: e.target.value })
+                  }
+                  className={inputCls}
+                >
+                  <option value="">— global fallback —</option>
+                  {(availableProviders ?? []).map((p) => (
+                    <option key={p.name} value={p.name}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+            ))}
           </div>
         </div>
       </div>

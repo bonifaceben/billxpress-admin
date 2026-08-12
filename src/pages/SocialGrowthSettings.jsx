@@ -36,6 +36,9 @@ function settingsToForm(s) {
     isEnabled: s.isEnabled ?? true,
     activeProvider: s.activeProvider ?? 'vheeboost',
     roundingMode: s.roundingMode ?? 'ceil',
+    userMarkupPercent: s.userMarkupPercent ?? 15,
+    vendorMarkupPercent: s.vendorMarkupPercent ?? 10,
+    usdToNgnRate: s.usdToNgnRate ?? 1600,
     userPricingTiers: cloneTiers(s.userPricingTiers),
     vendorPricingTiers: cloneTiers(s.vendorPricingTiers),
   };
@@ -123,6 +126,30 @@ function ViewMode({ settings, onEdit }) {
         </StatCard>
       </div>
 
+      {/* Markup & Exchange */}
+      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <h3 className="mb-4 font-semibold text-gray-900">Fallback Markup &amp; Exchange Rate</h3>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">User Fallback Markup</p>
+            <p className="mt-1 text-lg font-bold text-gray-900">{settings.userMarkupPercent ?? '—'}%</p>
+            <p className="mt-0.5 text-xs text-gray-400">Used when no tier matches the provider cost.</p>
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Vendor Fallback Markup</p>
+            <p className="mt-1 text-lg font-bold text-gray-900">{settings.vendorMarkupPercent ?? '—'}%</p>
+            <p className="mt-0.5 text-xs text-gray-400">Used when no tier matches the provider cost.</p>
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">USD → NGN Rate</p>
+            <p className="mt-1 text-lg font-bold text-gray-900">
+              {settings.usdToNgnRate != null ? `₦${Number(settings.usdToNgnRate).toLocaleString()}` : '—'}
+            </p>
+            <p className="mt-0.5 text-xs text-gray-400">Applied when provider returns USD prices.</p>
+          </div>
+        </div>
+      </div>
+
       {settings.availableProviders?.length > 0 && (
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <h3 className="mb-3 font-semibold text-gray-900">Available Providers</h3>
@@ -191,6 +218,9 @@ function EditMode({ initialForm, availableProviders, onSave, onCancel }) {
       isEnabled: form.isEnabled,
       activeProvider: form.activeProvider,
       roundingMode: form.roundingMode,
+      userMarkupPercent: Number(form.userMarkupPercent) || 0,
+      vendorMarkupPercent: Number(form.vendorMarkupPercent) || 0,
+      usdToNgnRate: Number(form.usdToNgnRate) || 0,
       userPricingTiers: sanitise(form.userPricingTiers),
       vendorPricingTiers: sanitise(form.vendorPricingTiers),
     };
@@ -235,6 +265,45 @@ function EditMode({ initialForm, availableProviders, onSave, onCancel }) {
               <option value="ceil">Ceil (round up)</option>
               <option value="round">Round (normal)</option>
             </select>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm text-gray-700">User Fallback Markup (%)</label>
+            <p className="mb-1.5 text-xs text-gray-400">Applied when no pricing tier matches the provider cost.</p>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={form.userMarkupPercent}
+              onChange={(e) => set('userMarkupPercent', e.target.value)}
+              className={inputCls}
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm text-gray-700">Vendor Fallback Markup (%)</label>
+            <p className="mb-1.5 text-xs text-gray-400">Applied when no pricing tier matches the provider cost.</p>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={form.vendorMarkupPercent}
+              onChange={(e) => set('vendorMarkupPercent', e.target.value)}
+              className={inputCls}
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm text-gray-700">USD → NGN Rate</label>
+            <p className="mb-1.5 text-xs text-gray-400">Used when the active provider returns prices in USD.</p>
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value={form.usdToNgnRate}
+              onChange={(e) => set('usdToNgnRate', e.target.value)}
+              className={inputCls}
+            />
           </div>
         </div>
       </div>
