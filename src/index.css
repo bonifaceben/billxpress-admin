@@ -1,6 +1,40 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root { color-scheme: light; }
+:root.dark { color-scheme: dark; }
+
 body {
   margin: 0;
   font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  min-width: 320px;
+  background: #f8fafc;
+  -webkit-font-smoothing: antialiased;
+}
+
+.dark body { background: #020617; }
+button, a, input, select, textarea { transition-duration: 180ms; }
+button:not(:disabled) { cursor: pointer; }
+.page-enter { animation: page-enter 420ms cubic-bezier(.2,.8,.2,1) both; }
+
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Dark-mode bridge for existing feature screens. */
+.dark .bg-white { background-color: #0f172a !important; }
+.dark .bg-gray-50 { background-color: #111827 !important; }
+.dark .bg-gray-100 { background-color: #1e293b !important; }
+.dark .border-gray-100, .dark .border-gray-200, .dark .border-gray-300 { border-color: #334155 !important; }
+.dark .text-gray-900 { color: #f8fafc !important; }
+.dark .text-gray-700, .dark .text-gray-600 { color: #cbd5e1 !important; }
+.dark .text-gray-500, .dark .text-gray-400 { color: #94a3b8 !important; }
+.dark input, .dark select, .dark textarea { color: #e2e8f0; background-color: #0f172a; border-color: #334155; }
+.dark input::placeholder, .dark textarea::placeholder { color: #64748b; }
+.dark tbody tr:hover { background-color: rgba(30, 41, 59, .7) !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
