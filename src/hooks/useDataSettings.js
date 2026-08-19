@@ -11,7 +11,7 @@ export function useDataSettings() {
     setError(null);
     try {
       const { data } = await apiClient.get('/api/v1/admin/services/data/settings');
-      setSettings(data.settings);
+      setSettings(data?.data?.settings ?? data.settings ?? data.data ?? data);
     } catch (err) {
       setError(err?.response?.data?.message ?? 'Failed to load data settings.');
     } finally {
@@ -23,9 +23,8 @@ export function useDataSettings() {
 
   async function update(payload) {
     const { data } = await apiClient.patch('/api/v1/admin/services/data/settings', payload);
-    // PATCH response contains the full updated settings including networkProviders —
-    // use it directly rather than re-fetching (a subsequent GET may not return networkProviders)
-    setSettings(data.settings);
+    setSettings(data?.data?.settings ?? data.settings ?? data.data ?? data);
+    await fetch();
     return data;
   }
 

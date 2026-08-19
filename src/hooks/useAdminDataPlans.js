@@ -2,11 +2,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '../lib/apiClient';
 
 export function useAdminDataPlans({
-  provider = 'smeplug',
+  provider = '',
   network = '',
   type = '',
   isEnabled = '',
   providerAvailable = '',
+  customerVisible = '',
+  sortBy = 'provider',
+  sortDirection = 'asc',
 } = {}) {
   const [plans, setPlans] = useState([]);
   const [count, setCount] = useState(0);
@@ -21,22 +24,25 @@ export function useAdminDataPlans({
     setLoading(true);
     setError(null);
     try {
-      const params = { provider };
+      const params = { sortBy, sortDirection };
+      if (provider) params.provider = provider;
       if (network) params.network = network;
       if (type) params.type = type;
       if (isEnabled !== '') params.isEnabled = isEnabled;
       if (providerAvailable !== '') params.providerAvailable = providerAvailable;
+      if (customerVisible !== '') params.customerVisible = customerVisible;
 
       const { data } = await apiClient.get('/api/v1/admin/services/data/plans', { params });
-      const list = data.plans ?? data.data ?? [];
+      const payload = data?.data ?? data ?? {};
+      const list = payload.plans ?? (Array.isArray(payload) ? payload : []);
       setPlans(list);
-      setCount(data.count ?? data.total ?? list.length);
+      setCount(payload.count ?? payload.total ?? list.length);
     } catch (err) {
       setError(err?.response?.data?.message ?? 'Failed to load plans.');
     } finally {
       setLoading(false);
     }
-  }, [provider, network, type, isEnabled, providerAvailable]);
+  }, [provider, network, type, isEnabled, providerAvailable, customerVisible, sortBy, sortDirection]);
 
   useEffect(() => { fetch(); }, [fetch]);
 
@@ -59,7 +65,7 @@ export function useAdminDataPlans({
 
   async function updatePlan(id, payload) {
     const { data } = await apiClient.patch(`/api/v1/admin/services/data/plans/${id}`, payload);
-    const updated = data.plan ?? data;
+    const updated = data?.data?.plan ?? data?.plan ?? data?.data ?? data;
     setPlans((prev) => prev.map((p) => (p.id === id ? { ...p, ...updated } : p)));
     return data;
   }

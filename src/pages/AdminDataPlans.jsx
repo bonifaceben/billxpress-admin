@@ -5,6 +5,7 @@ import { useAdminDataPlans } from '../hooks/useAdminDataPlans';
 
 const NETWORKS = ['', 'MTN', 'AIRTEL', 'GLO', '9MOBILE'];
 const TYPES = ['', 'AWOOF', 'GIFTING', 'SME', 'CORPORATE GIFTING', 'SOCIAL', 'OTHER'];
+const PROVIDERS = ['', 'smeapi', 'smeplug', 'autopilot', 'ujaydata', 'ogdams', '2fast', 'vtpass'];
 
 const NETWORK_COLORS = {
   MTN: 'bg-yellow-100 text-yellow-800',
@@ -14,11 +15,14 @@ const NETWORK_COLORS = {
 };
 
 const EMPTY_FILTERS = {
-  provider: 'smeplug',
+  provider: '',
   network: '',
   type: '',
   isEnabled: '',
   providerAvailable: '',
+  customerVisible: '',
+  sortBy: 'provider',
+  sortDirection: 'asc',
 };
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -31,6 +35,12 @@ function formatNaira(value) {
 function shortId(id) {
   if (!id) return '—';
   return String(id).length > 12 ? String(id).slice(0, 8) + '…' : id;
+}
+
+function formatDate(value) {
+  if (!value) return '—';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
 }
 
 // ─── badges ──────────────────────────────────────────────────────────────────
@@ -59,14 +69,18 @@ function AvailableBadge({ value }) {
 function PlanRow({ plan, onUpdate }) {
   const [isEnabled, setIsEnabled] = useState(plan.isEnabled);
   const [priceDraft, setPriceDraft] = useState(plan.ourPrice ?? '');
+  const [vendorPriceDraft, setVendorPriceDraft] = useState(plan.vendorPrice ?? '');
   const [savingEnabled, setSavingEnabled] = useState(false);
   const [savingPrice, setSavingPrice] = useState(false);
+  const [savingVendorPrice, setSavingVendorPrice] = useState(false);
   const [enabledError, setEnabledError] = useState(null);
   const [priceError, setPriceError] = useState(null);
+  const [vendorPriceError, setVendorPriceError] = useState(null);
 
   // keep local state in sync when parent re-fetches
   useEffect(() => { setIsEnabled(plan.isEnabled); }, [plan.isEnabled]);
   useEffect(() => { setPriceDraft(plan.ourPrice ?? ''); }, [plan.ourPrice]);
+  useEffect(() => { setVendorPriceDraft(plan.vendorPrice ?? ''); }, [plan.vendorPrice]);
 
   async function handleEnabledChange(e) {
     const next = e.target.value === 'true';
@@ -99,6 +113,21 @@ function PlanRow({ plan, onUpdate }) {
     }
   }
 
+  async function handleVendorPriceBlur() {
+    const num = vendorPriceDraft === '' ? null : Number(vendorPriceDraft);
+    if (num === (plan.vendorPrice ?? null)) return;
+    setVendorPriceError(null);
+    setSavingVendorPrice(true);
+    try {
+      await onUpdate(plan.id, { vendorPrice: num });
+    } catch (err) {
+      setVendorPriceDraft(plan.vendorPrice ?? '');
+      setVendorPriceError(err?.response?.data?.message ?? 'Save failed');
+    } finally {
+      setSavingVendorPrice(false);
+    }
+  }
+
   const priceIsUnset = priceDraft === '' || priceDraft == null;
 
   return (
@@ -109,6 +138,7 @@ function PlanRow({ plan, onUpdate }) {
         </span>
       </td>
       <td className="px-4 py-3"><NetworkBadge network={plan.network} /></td>
+      <td className="px-4 py-3 font-semibold capitalize text-gray-700">{plan.provider ?? '—'}</td>
       <td className="px-4 py-3 font-medium text-gray-900">{plan.name ?? plan.planName ?? '—'}</td>
       <td className="px-4 py-3 text-gray-600">{plan.type ?? plan.datatype ?? '—'}</td>
       <td className="px-4 py-3 text-gray-600">{plan.validity ?? '—'}</td>
@@ -118,6 +148,7 @@ function PlanRow({ plan, onUpdate }) {
       <td className="px-4 py-3 text-gray-500">
         {formatNaira(plan.providerPrice ?? plan.price ?? plan.costPrice) ?? '—'}
       </td>
+      <td className="px-4 py-3 font-medium text-gray-700">{formatNaira(plan.costPrice) ?? '—'}</td>
 
       {/* Our Price — editable */}
       <td className="px-4 py-3">
@@ -144,6 +175,13 @@ function PlanRow({ plan, onUpdate }) {
         </div>
       </td>
 
+      <td className="px-4 py-3">
+        <div className="flex flex-col gap-0.5">
+          <div className="flex items-center gap-1.5"><input type="number" min="0" value={vendorPriceDraft} onChange={(e) => setVendorPriceDraft(e.target.value)} onBlur={handleVendorPriceBlur} onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }} placeholder="Fallback" disabled={savingVendorPrice} className="w-24 rounded-md border border-gray-200 bg-white px-2 py-1 text-xs text-gray-900 outline-none focus:ring-1 focus:ring-orange-400 disabled:opacity-50" />{savingVendorPrice && <span className="text-xs text-gray-400">Saving…</span>}</div>
+          {vendorPriceError && <p className="text-xs text-red-500">{vendorPriceError}</p>}
+        </div>
+      </td>
+
       {/* Enabled — editable select */}
       <td className="px-4 py-3">
         <div className="flex flex-col gap-0.5">
@@ -152,23 +190,17 @@ function PlanRow({ plan, onUpdate }) {
               value={isEnabled ? 'true' : 'false'}
               onChange={handleEnabledChange}
               disabled={savingEnabled}
-              title={priceIsUnset ? 'Set a price before enabling this plan' : undefined}
               className={`rounded-md border px-2 py-1 text-xs font-semibold outline-none focus:ring-1 focus:ring-orange-400 disabled:opacity-50 ${
                 isEnabled
                   ? 'border-green-200 bg-green-50 text-green-700'
                   : 'border-red-200 bg-red-50 text-red-700'
               }`}
             >
-              <option value="true" disabled={priceIsUnset}>
-                {priceIsUnset ? 'Enabled (set price first)' : 'Enabled'}
-              </option>
+              <option value="true">Enabled</option>
               <option value="false">Disabled</option>
             </select>
             {savingEnabled && <span className="text-xs text-gray-400">Saving…</span>}
           </div>
-          {priceIsUnset && !isEnabled && (
-            <p className="text-xs text-orange-500">Set price first</p>
-          )}
           {enabledError && (
             <p className="rounded bg-red-50 px-2 py-1 text-xs font-medium text-red-600">
               {enabledError}
@@ -178,6 +210,7 @@ function PlanRow({ plan, onUpdate }) {
       </td>
 
       <td className="px-4 py-3"><AvailableBadge value={plan.providerAvailable} /></td>
+      <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">{formatDate(plan.lastSyncedAt)}</td>
     </tr>
   );
 }
@@ -193,13 +226,7 @@ function FilterBar({ filters, onChange, onSearch, onClear }) {
       onSubmit={(e) => { e.preventDefault(); onSearch(); }}
       className="mb-5 flex flex-wrap gap-3"
     >
-      <input
-        type="text"
-        value={filters.provider}
-        onChange={(e) => onChange('provider', e.target.value)}
-        placeholder="Provider (e.g. smeplug)"
-        className={inputCls + ' w-44'}
-      />
+      <select value={filters.provider} onChange={(e) => onChange('provider', e.target.value)} className={inputCls + ' w-40'}><option value="">All providers</option>{PROVIDERS.filter(Boolean).map((provider) => <option key={provider} value={provider}>{provider}</option>)}</select>
 
       <select value={filters.network} onChange={(e) => onChange('network', e.target.value)} className={inputCls + ' w-40'}>
         <option value="">All networks</option>
@@ -226,6 +253,10 @@ function FilterBar({ filters, onChange, onSearch, onClear }) {
         <option value="true">Available only</option>
         <option value="false">Unavailable only</option>
       </select>
+
+      <select value={filters.customerVisible} onChange={(e) => onChange('customerVisible', e.target.value)} className={inputCls + ' w-44'}><option value="">Visibility: all</option><option value="true">Customer visible</option><option value="false">Not customer visible</option></select>
+      <select value={filters.sortBy} onChange={(e) => onChange('sortBy', e.target.value)} className={inputCls + ' w-40'}><option value="provider">Sort: provider</option><option value="network">Sort: network</option><option value="price">Sort: price</option><option value="name">Sort: name</option></select>
+      <select value={filters.sortDirection} onChange={(e) => onChange('sortDirection', e.target.value)} className={inputCls + ' w-32'}><option value="asc">Ascending</option><option value="desc">Descending</option></select>
 
       <button type="submit" className="rounded-md bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600">
         Search
@@ -273,14 +304,14 @@ function SummaryCards({ plans }) {
   const enabled = plans.filter((p) => p.isEnabled).length;
   const disabled = total - enabled;
   const providerAvail = plans.filter((p) => p.providerAvailable).length;
-  const unpriced = plans.filter((p) => p.ourPrice == null).length;
+  const fallbackPriced = plans.filter((p) => p.ourPrice == null || p.vendorPrice == null).length;
 
   const cards = [
     { label: 'Total Plans', value: total },
     { label: 'Enabled', value: enabled, color: 'text-green-600' },
     { label: 'Disabled', value: disabled, color: 'text-red-600' },
     { label: 'Provider Available', value: providerAvail, color: 'text-blue-600' },
-    { label: 'Price Not Set', value: unpriced, color: unpriced > 0 ? 'text-orange-600' : 'text-gray-900' },
+    { label: 'Using Fallback Pricing', value: fallbackPriced, color: fallbackPriced > 0 ? 'text-orange-600' : 'text-gray-900' },
   ];
 
   return (
@@ -335,7 +366,7 @@ export default function AdminDataPlans() {
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Data Plan Management</h1>
           <p className="mt-0.5 text-sm text-gray-500">
-            Sync and manage data plans from the SME Plug provider catalogue.
+            Audit, price, enable, and route plans across every connected provider.
           </p>
         </div>
 
@@ -361,7 +392,7 @@ export default function AdminDataPlans() {
                 Syncing…
               </>
             ) : (
-              'Sync from SME Plug'
+                'Sync Provider Plans'
             )}
           </button>
         </div>
@@ -376,8 +407,8 @@ export default function AdminDataPlans() {
       )}
 
       <div className="mb-4 rounded-md bg-blue-50 px-4 py-3 text-xs text-blue-700">
-        <strong>Note:</strong> New plans are synced with <em>Is Enabled: false</em> and <em>Our Price: not set</em>.
-        Set <code>ourPrice</code> and enable each plan before it becomes visible to customers.
+        <strong>Pricing:</strong> <code>ourPrice</code> and <code>vendorPrice</code> are optional fixed prices.
+        Leave either blank to use that audience's tiered or fallback percentage pricing.
       </div>
 
       <FilterBar
@@ -408,7 +439,7 @@ export default function AdminDataPlans() {
             <table className="w-full min-w-[1150px] text-left text-sm">
               <thead className="border-b border-gray-200 bg-gray-50">
                 <tr>
-                  {['DB ID', 'Network', 'Bundle', 'Type', 'Validity', 'Network Price', 'Provider Price', 'Our Price', 'Enabled', 'Provider'].map((h) => (
+                  {['DB ID', 'Network', 'Provider', 'Bundle', 'Type', 'Validity', 'Network Price', 'Provider Price', 'Cost Price', 'Our Price', 'Vendor Price', 'Enabled', 'Available', 'Last Synced'].map((h) => (
                     <th key={h} className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
                       {h}
                     </th>

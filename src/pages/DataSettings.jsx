@@ -23,6 +23,7 @@ const MVP_VENDOR_TIERS = [
 // ─── constants ───────────────────────────────────────────────────────────────
 
 const NETWORKS = ['MTN', 'AIRTEL', 'GLO', '9MOBILE'];
+const SUPPORTED_PROVIDERS = ['smeapi', 'smeplug', 'autopilot', 'ujaydata', 'ogdams', '2fast', 'vtpass'];
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -35,15 +36,20 @@ function cloneTiers(tiers) {
   return (tiers ?? []).map((t) => ({ ...t }));
 }
 
+function providerList(value) {
+  if (Array.isArray(value)) return value.filter(Boolean).slice(0, 2);
+  return value ? [value] : [];
+}
+
 function settingsToForm(s) {
   return {
     isEnabled: s.isEnabled ?? true,
     activeProvider: s.activeProvider ?? '',
     networkProviders: {
-      MTN: s.networkProviders?.MTN ?? '',
-      AIRTEL: s.networkProviders?.AIRTEL ?? '',
-      GLO: s.networkProviders?.GLO ?? '',
-      '9MOBILE': s.networkProviders?.['9MOBILE'] ?? '',
+      MTN: providerList(s.networkProviders?.MTN),
+      AIRTEL: providerList(s.networkProviders?.AIRTEL),
+      GLO: providerList(s.networkProviders?.GLO),
+      '9MOBILE': providerList(s.networkProviders?.['9MOBILE']),
     },
     userMarkupPercent: s.userMarkupPercent ?? 15,
     vendorMarkupPercent: s.vendorMarkupPercent ?? 10,
@@ -170,12 +176,12 @@ function ViewMode({ settings, onEdit }) {
         </p>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {NETWORKS.map((network) => {
-            const provider = settings.networkProviders?.[network];
+            const providers = providerList(settings.networkProviders?.[network]);
             return (
               <div key={network} className="rounded-lg border border-gray-100 bg-gray-50 p-3">
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">{network}</p>
-                {provider ? (
-                  <p className="mt-1 text-sm font-semibold text-orange-600">{provider}</p>
+                {providers.length ? (
+                  <div className="mt-2 flex flex-wrap gap-1.5">{providers.map((provider) => <span key={provider} className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-semibold text-orange-700">{provider}</span>)}</div>
                 ) : (
                   <p className="mt-1 text-xs text-gray-400">global fallback</p>
                 )}
@@ -213,6 +219,14 @@ function EditMode({ initialForm, availableProviders, onSave, onCancel }) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
+  function toggleNetworkProvider(network, provider) {
+    const selected = providerList(form.networkProviders?.[network]);
+    const next = selected.includes(provider)
+      ? selected.filter((item) => item !== provider)
+      : selected.length < 2 ? [...selected, provider] : selected;
+    set('networkProviders', { ...form.networkProviders, [network]: next });
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setSaving(true);
@@ -226,26 +240,20 @@ function EditMode({ initialForm, availableProviders, onSave, onCancel }) {
         markupPercent: Number(t.markupPercent) || 0,
       }));
 
-    // build networkProviders — only include if at least one network has an explicit provider
-    const networkProviders = {};
-    for (const [network, provider] of Object.entries(form.networkProviders ?? {})) {
-      if (provider) networkProviders[network] = provider;
-    }
+    const networkProviders = Object.fromEntries(
+      NETWORKS.map((network) => [network, providerList(form.networkProviders?.[network])]),
+    );
 
     const payload = {
       isEnabled: form.isEnabled,
       activeProvider: form.activeProvider,
+      networkProviders,
       userMarkupPercent: Number(form.userMarkupPercent),
       vendorMarkupPercent: Number(form.vendorMarkupPercent),
       roundingMode: form.roundingMode,
       userPricingTiers: sanitise(form.userPricingTiers),
       vendorPricingTiers: sanitise(form.vendorPricingTiers),
     };
-
-    // only attach networkProviders when there is something to set
-    if (Object.keys(networkProviders).length > 0) {
-      payload.networkProviders = networkProviders;
-    }
 
     try {
       await onSave(payload);
@@ -325,30 +333,24 @@ function EditMode({ initialForm, availableProviders, onSave, onCancel }) {
 
         {/* networkProviders */}
         <div className="mt-5 border-t border-gray-100 pt-5">
-          <p className="mb-1 text-sm font-medium text-gray-700">Network Provider Overrides</p>
+          <p className="mb-1 text-sm font-medium text-gray-700">Network Provider Routing</p>
           <p className="mb-3 text-xs text-gray-400">
-            Route each network to a specific provider. Leave blank to use the global active provider above.
+            Choose up to two providers per network. Leave a network empty to use the global fallback provider.
           </p>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {NETWORKS.map((network) => (
-              <div key={network}>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  {network}
-                </label>
-                <select
-                  value={form.networkProviders[network] ?? ''}
-                  onChange={(e) =>
-                    set('networkProviders', { ...form.networkProviders, [network]: e.target.value })
-                  }
-                  className={inputCls}
-                >
-                  <option value="">— global fallback —</option>
-                  {(availableProviders ?? []).map((p) => (
-                    <option key={p.name} value={p.name}>{p.name}</option>
-                  ))}
-                </select>
-              </div>
-            ))}
+          <div className="grid gap-4 sm:grid-cols-2">
+            {NETWORKS.map((network) => {
+              const selected = providerList(form.networkProviders?.[network]);
+              const providerOptions = availableProviders?.length ? availableProviders : SUPPORTED_PROVIDERS.map((name) => ({ name, available: true }));
+              return <div key={network} className="rounded-xl border border-gray-200 p-4 dark:border-slate-700">
+                <div className="mb-3 flex items-center justify-between"><label className="text-xs font-semibold uppercase tracking-wide text-gray-500">{network}</label><span className="text-xs text-gray-400">{selected.length}/2 selected</span></div>
+                <div className="flex flex-wrap gap-2">{providerOptions.map((provider) => {
+                  const active = selected.includes(provider.name);
+                  const blocked = !active && selected.length >= 2;
+                  return <button key={provider.name} type="button" disabled={blocked} onClick={() => toggleNetworkProvider(network, provider.name)} className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-35 ${active ? 'border-orange-400 bg-orange-50 text-orange-700 dark:bg-orange-950/30' : 'border-gray-200 text-gray-600 hover:border-orange-300 dark:border-slate-700'}`}><span className={`h-1.5 w-1.5 rounded-full ${provider.available ? 'bg-green-500' : 'bg-gray-300'}`} />{provider.name}</button>;
+                })}</div>
+                {selected.length === 0 && <p className="mt-2 text-xs text-gray-400">Uses {form.activeProvider || 'global'} fallback</p>}
+              </div>;
+            })}
           </div>
         </div>
       </div>
