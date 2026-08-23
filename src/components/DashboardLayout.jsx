@@ -31,6 +31,7 @@ const sections = [
     { to: '/services/data-plan-management', label: 'Plan Management', icon: 'service' },
     { to: '/services/data-settings', label: 'Data Settings', icon: 'service' },
     { to: '/services/airtime-settings', label: 'Airtime Settings', icon: 'service' },
+    { to: '/services/electricity-settings', label: 'Electricity Settings', icon: 'service' },
     { to: '/services/social-growth-settings', label: 'Social Growth', icon: 'service' },
     { to: '/services/card-settings', label: 'Card Settings', icon: 'service' },
   ] },
