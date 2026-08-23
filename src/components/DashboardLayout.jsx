@@ -32,10 +32,12 @@ const sections = [
     { to: '/services/data-settings', label: 'Data Settings', icon: 'service' },
     { to: '/services/airtime-settings', label: 'Airtime Settings', icon: 'service' },
     { to: '/services/electricity-settings', label: 'Electricity Settings', icon: 'service' },
+    { to: '/services/cable-tv', label: 'Cable TV', icon: 'service' },
     { to: '/services/social-growth-settings', label: 'Social Growth', icon: 'service' },
     { to: '/services/card-settings', label: 'Card Settings', icon: 'service' },
   ] },
   { heading: 'Money', items: [
+    { to: '/transactions', label: 'Transactions', icon: 'wallet' },
     { to: '/cards', label: 'Virtual Cards', icon: 'card' },
     { to: '/funding/settings', label: 'Funding & Transfers', icon: 'wallet' },
   ] },

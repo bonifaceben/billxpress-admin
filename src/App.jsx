@@ -17,6 +17,8 @@ import SocialGrowthSettings from './pages/SocialGrowthSettings';
 import CardSettings from './pages/CardSettings';
 import AdminCards from './pages/AdminCards';
 import FundingSettings from './pages/FundingSettings';
+import Transactions from './pages/Transactions';
+import CableTvManagement from './pages/CableTvManagement';
 
 function App() {
   return (
@@ -45,6 +47,8 @@ function App() {
           <Route path="/services/card-settings" element={<CardSettings />} />
           <Route path="/cards" element={<AdminCards />} />
           <Route path="/funding/settings" element={<FundingSettings />} />
+          <Route path="/transactions" element={<Transactions />} />
+          <Route path="/services/cable-tv" element={<CableTvManagement />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
