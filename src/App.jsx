@@ -19,6 +19,7 @@ import AdminCards from './pages/AdminCards';
 import FundingSettings from './pages/FundingSettings';
 import Transactions from './pages/Transactions';
 import CableTvManagement from './pages/CableTvManagement';
+import DataShare from './pages/DataShare';
 
 function App() {
   return (
@@ -41,6 +42,7 @@ function App() {
           <Route path="/services/data-plans" element={<DataPlans />} />
           <Route path="/services/data-plan-management" element={<AdminDataPlans />} />
           <Route path="/services/data-settings" element={<DataSettings />} />
+          <Route path="/services/datashare" element={<DataShare />} />
           <Route path="/services/airtime-settings" element={<AirtimeSettings />} />
           <Route path="/services/electricity-settings" element={<ElectricitySettings />} />
           <Route path="/services/social-growth-settings" element={<SocialGrowthSettings />} />

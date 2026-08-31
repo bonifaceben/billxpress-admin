@@ -30,6 +30,7 @@ const sections = [
     { to: '/services/data-plans', label: 'Data Plans', icon: 'service' },
     { to: '/services/data-plan-management', label: 'Plan Management', icon: 'service' },
     { to: '/services/data-settings', label: 'Data Settings', icon: 'service' },
+    { to: '/services/datashare', label: 'DataShare Inventory', icon: 'service' },
     { to: '/services/airtime-settings', label: 'Airtime Settings', icon: 'service' },
     { to: '/services/electricity-settings', label: 'Electricity Settings', icon: 'service' },
     { to: '/services/cable-tv', label: 'Cable TV', icon: 'service' },
