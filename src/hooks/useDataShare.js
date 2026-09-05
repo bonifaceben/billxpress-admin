@@ -75,5 +75,7 @@ export function useDataShare() {
     reloadSim: (id) => mutate(() => apiClient.post(`${BASE}/sims/${id}/reload`)),
     createBatch: (body) => mutate(() => apiClient.post(`${BASE}/batches`, body)),
     updateBatch: (id, body) => mutate(() => apiClient.patch(`${BASE}/batches/${id}`, body)),
+    adjustBatch: (id, body) => mutate(() => apiClient.post(`${BASE}/batches/${id}/adjust`, body)),
+    deleteBatch: (id) => mutate(() => apiClient.delete(`${BASE}/batches/${id}`)),
   };
 }

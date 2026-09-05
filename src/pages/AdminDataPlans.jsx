@@ -70,17 +70,34 @@ function PlanRow({ plan, onUpdate }) {
   const [isEnabled, setIsEnabled] = useState(plan.isEnabled);
   const [priceDraft, setPriceDraft] = useState(plan.ourPrice ?? '');
   const [vendorPriceDraft, setVendorPriceDraft] = useState(plan.vendorPrice ?? '');
+  const [dataType, setDataType] = useState(plan.dataType ?? plan.type ?? plan.datatype ?? 'OTHER');
+  const [fulfillmentRoute, setFulfillmentRoute] = useState(plan.fulfillmentRoute ?? (plan.allowHostedSim === true ? 'network' : 'provider'));
   const [savingEnabled, setSavingEnabled] = useState(false);
   const [savingPrice, setSavingPrice] = useState(false);
   const [savingVendorPrice, setSavingVendorPrice] = useState(false);
   const [enabledError, setEnabledError] = useState(null);
   const [priceError, setPriceError] = useState(null);
   const [vendorPriceError, setVendorPriceError] = useState(null);
+  const [deliveryError, setDeliveryError] = useState(null);
+  const [savingDelivery, setSavingDelivery] = useState('');
 
   // keep local state in sync when parent re-fetches
   useEffect(() => { setIsEnabled(plan.isEnabled); }, [plan.isEnabled]);
   useEffect(() => { setPriceDraft(plan.ourPrice ?? ''); }, [plan.ourPrice]);
   useEffect(() => { setVendorPriceDraft(plan.vendorPrice ?? ''); }, [plan.vendorPrice]);
+  useEffect(() => { setDataType(plan.dataType ?? plan.type ?? plan.datatype ?? 'OTHER'); }, [plan.dataType, plan.type, plan.datatype]);
+  useEffect(() => { setFulfillmentRoute(plan.fulfillmentRoute ?? (plan.allowHostedSim === true ? 'network' : 'provider')); }, [plan.fulfillmentRoute, plan.allowHostedSim]);
+
+  async function handleDeliveryChange(field, value) {
+    const previous = field === 'dataType' ? dataType : fulfillmentRoute;
+    if (field === 'dataType') setDataType(value); else setFulfillmentRoute(value);
+    setDeliveryError(null); setSavingDelivery(field);
+    try { await onUpdate(plan.id, { [field]: value }); }
+    catch (err) {
+      if (field === 'dataType') setDataType(previous); else setFulfillmentRoute(previous);
+      setDeliveryError(err?.response?.data?.message ?? 'Save failed');
+    } finally { setSavingDelivery(''); }
+  }
 
   async function handleEnabledChange(e) {
     const next = e.target.value === 'true';
@@ -140,7 +157,7 @@ function PlanRow({ plan, onUpdate }) {
       <td className="px-4 py-3"><NetworkBadge network={plan.network} /></td>
       <td className="px-4 py-3 font-semibold capitalize text-gray-700">{plan.provider ?? '—'}</td>
       <td className="px-4 py-3 font-medium text-gray-900">{plan.name ?? plan.planName ?? '—'}</td>
-      <td className="px-4 py-3 text-gray-600">{plan.type ?? plan.datatype ?? '—'}</td>
+      <td className="px-4 py-3"><select aria-label="Data type" value={dataType} onChange={(e) => handleDeliveryChange('dataType', e.target.value)} disabled={savingDelivery === 'dataType'} className="w-36 rounded-md border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700 outline-none focus:ring-1 focus:ring-orange-400 disabled:opacity-50">{!TYPES.includes(dataType) && <option value={dataType}>{dataType}</option>}{TYPES.filter(Boolean).map((value) => <option key={value} value={value}>{value}</option>)}</select></td>
       <td className="px-4 py-3 text-gray-600">{plan.validity ?? '—'}</td>
       <td className="px-4 py-3 text-gray-500">
         {formatNaira(plan.networkPrice) ?? '—'}
@@ -149,6 +166,8 @@ function PlanRow({ plan, onUpdate }) {
         {formatNaira(plan.providerPrice ?? plan.price ?? plan.costPrice) ?? '—'}
       </td>
       <td className="px-4 py-3 font-medium text-gray-700">{formatNaira(plan.costPrice) ?? '—'}</td>
+
+      <td className="px-4 py-3"><select aria-label="Fulfillment route" value={fulfillmentRoute} onChange={(e) => handleDeliveryChange('fulfillmentRoute', e.target.value)} disabled={savingDelivery === 'fulfillmentRoute'} className={`w-28 rounded-md border px-2 py-1 text-xs font-semibold outline-none focus:ring-1 focus:ring-orange-400 disabled:opacity-50 ${fulfillmentRoute === 'network' ? 'border-violet-200 bg-violet-50 text-violet-700' : 'border-blue-200 bg-blue-50 text-blue-700'}`}><option value="network">Network SIM</option><option value="provider">Provider API</option></select>{deliveryError && <p className="mt-1 max-w-40 text-xs text-red-500">{deliveryError}</p>}</td>
 
       {/* Our Price — editable */}
       <td className="px-4 py-3">
@@ -196,7 +215,7 @@ function PlanRow({ plan, onUpdate }) {
                   : 'border-red-200 bg-red-50 text-red-700'
               }`}
             >
-              <option value="true">Enabled</option>
+              <option value="true" disabled={!plan.providerAvailable}>Enabled</option>
               <option value="false">Disabled</option>
             </select>
             {savingEnabled && <span className="text-xs text-gray-400">Saving…</span>}
@@ -408,7 +427,7 @@ export default function AdminDataPlans() {
 
       <div className="mb-4 rounded-md bg-blue-50 px-4 py-3 text-xs text-blue-700">
         <strong>Pricing:</strong> <code>ourPrice</code> and <code>vendorPrice</code> are optional fixed prices.
-        Leave either blank to use that audience's tiered or fallback percentage pricing.
+        Leave either blank to use that audience's tiered or fallback percentage pricing. Choose <strong>Network SIM</strong> to cost against <code>networkPrice</code>, or <strong>Provider API</strong> to cost against <code>providerPrice</code>.
       </div>
 
       <FilterBar
@@ -436,10 +455,10 @@ export default function AdminDataPlans() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1150px] text-left text-sm">
+            <table className="w-full min-w-[1350px] text-left text-sm">
               <thead className="border-b border-gray-200 bg-gray-50">
                 <tr>
-                  {['DB ID', 'Network', 'Provider', 'Bundle', 'Type', 'Validity', 'Network Price', 'Provider Price', 'Cost Price', 'Our Price', 'Vendor Price', 'Enabled', 'Available', 'Last Synced'].map((h) => (
+                  {['DB ID', 'Network', 'Provider', 'Bundle', 'Data Type', 'Validity', 'Network Price', 'Provider Price', 'Cost Price', 'Fulfillment', 'Our Price', 'Vendor Price', 'Enabled', 'Available', 'Last Synced'].map((h) => (
                     <th key={h} className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
                       {h}
                     </th>
