@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import ResponsiveTable from '../components/ResponsiveTable';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNotifications } from '../hooks/useNotifications';
 import { apiClient } from '../lib/apiClient';
+import NotificationUserSearch from '../components/NotificationUserSearch';
 
 const LIMIT = 20;
 
@@ -33,6 +36,14 @@ function TypeBadge({ type }) {
 // ─── Create Notification Modal ───────────────────────────────────────────────
 
 function CreateModal({ onClose, onSuccess }) {
+  const dialogRef = useRef(null);
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    const previousOverflow = document.body.style.overflow;
+    dialog.showModal();
+    document.body.style.overflow = 'hidden';
+    return () => { dialog.close(); document.body.style.overflow = previousOverflow; };
+  }, []);
   const [form, setForm] = useState({
     target: 'user',
     userId: '',
@@ -40,6 +51,8 @@ function CreateModal({ onClose, onSuccess }) {
     message: '',
     channel: 'in_app',
     priority: 'normal',
+    expiresIn: 'never',
+    expiresAt: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -51,6 +64,10 @@ function CreateModal({ onClose, onSuccess }) {
   async function handleSubmit(e) {
     e.preventDefault();
     setError(null);
+    if (form.target === 'user' && !form.userId) {
+      setError('Search for and select a recipient before sending.');
+      return;
+    }
     setLoading(true);
     try {
       const body = {
@@ -61,6 +78,16 @@ function CreateModal({ onClose, onSuccess }) {
         priority: form.priority,
       };
       if (form.target === 'user') body.userId = form.userId.trim();
+      if (form.expiresIn === 'custom') {
+        const expiry = new Date(form.expiresAt);
+        if (!form.expiresAt || Number.isNaN(expiry.getTime()) || expiry.getTime() <= Date.now()) {
+          setError('Choose a valid future expiry date and time.');
+          return;
+        }
+        body.expiresAt = expiry.toISOString();
+      } else {
+        body.expiresIn = form.expiresIn;
+      }
 
       await apiClient.post('/api/v1/admin/notifications', body);
       onSuccess();
@@ -73,25 +100,28 @@ function CreateModal({ onClose, onSuccess }) {
   }
 
   const inputCls =
-    'w-full rounded-md bg-gray-100 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none ring-1 ring-transparent focus:bg-white focus:ring-orange-500';
-  const selectCls =
-    'w-full rounded-md bg-gray-100 px-3 py-2.5 text-sm text-gray-900 outline-none ring-1 ring-transparent focus:bg-white focus:ring-orange-500';
+    'w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-orange-400 focus:bg-white focus:ring-4 focus:ring-orange-500/10 dark:border-slate-700 dark:bg-slate-950/50 dark:text-slate-100';
+  const selectCls = inputCls;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-        <h2 className="mb-1 text-lg font-semibold text-gray-900">Create Notification</h2>
-        <p className="mb-5 text-sm text-gray-500">
-          Send an in-app, push, or email notification to a user or all active users.
-        </p>
+  return createPortal(
+    <dialog ref={dialogRef} aria-labelledby="create-notification-title" onCancel={(e) => { e.preventDefault(); if (!loading) onClose(); }} className="m-auto max-h-[92dvh] w-[calc(100%-2rem)] max-w-2xl overflow-y-auto overscroll-contain rounded-3xl border border-slate-200 bg-white p-0 text-slate-900 shadow-2xl backdrop:bg-slate-950/60 backdrop:backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+      <div className="min-w-0">
+        <header className="flex shrink-0 items-start gap-4 border-b border-slate-100 bg-gradient-to-br from-orange-50 to-white px-6 py-5 dark:border-slate-800 dark:from-orange-500/10 dark:to-slate-900 sm:px-8">
+          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-orange-500 text-white shadow-lg shadow-orange-500/20"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className="h-6 w-6" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg></div>
+          <div className="flex-1"><p className="mb-1 text-[10px] font-bold uppercase tracking-[.18em] text-orange-600 dark:text-orange-400">Customer engagement</p><h2 id="create-notification-title" className="text-xl font-bold tracking-tight">Create notification</h2><p className="mt-1 text-sm text-slate-500 dark:text-slate-400">A timely message, delivered your way.</p></div>
+          <button type="button" disabled={loading} onClick={onClose} aria-label="Close notification editor" className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-40 dark:hover:bg-slate-800"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg></button>
+        </header>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="min-w-0">
+        <fieldset disabled={loading} className="min-w-0 space-y-5 px-6 py-6 disabled:opacity-60 sm:px-8">
+          <p className="text-xs font-bold uppercase tracking-widest text-slate-400">01 / Audience</p>
           {/* Target */}
           <div>
-            <label className="mb-1 block text-sm text-gray-700">
+            <label htmlFor="notification-target" className="mb-2 block text-sm font-medium text-gray-700">
               Target <span className="text-orange-500">*</span>
             </label>
             <select
+              id="notification-target"
               value={form.target}
               onChange={(e) => set('target', e.target.value)}
               className={selectCls}
@@ -103,27 +133,17 @@ function CreateModal({ onClose, onSuccess }) {
 
           {/* User ID — only when target = user */}
           {form.target === 'user' && (
-            <div>
-              <label className="mb-1 block text-sm text-gray-700">
-                User ID <span className="text-orange-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                value={form.userId}
-                onChange={(e) => set('userId', e.target.value)}
-                className={inputCls}
-                placeholder="Paste the recipient's user ID"
-              />
-            </div>
+            <NotificationUserSearch userId={form.userId} onSelect={(id) => set('userId', id)} inputClassName={inputCls} />
           )}
 
           {/* Title */}
+          <div className="border-t border-slate-100 pt-5 dark:border-slate-800"><p className="text-xs font-bold uppercase tracking-widest text-slate-400">02 / Message</p></div>
           <div>
-            <label className="mb-1 block text-sm text-gray-700">
+            <label htmlFor="notification-title" className="mb-2 block text-sm font-medium text-gray-700">
               Title <span className="text-orange-500">*</span>
             </label>
             <input
+              id="notification-title"
               type="text"
               required
               value={form.title}
@@ -135,12 +155,13 @@ function CreateModal({ onClose, onSuccess }) {
 
           {/* Message */}
           <div>
-            <label className="mb-1 block text-sm text-gray-700">
+            <label htmlFor="notification-message" className="mb-2 block text-sm font-medium text-gray-700">
               Message <span className="text-orange-500">*</span>
             </label>
             <textarea
+              id="notification-message"
               required
-              rows={3}
+              rows={4}
               value={form.message}
               onChange={(e) => set('message', e.target.value)}
               className={inputCls + ' resize-none'}
@@ -149,10 +170,12 @@ function CreateModal({ onClose, onSuccess }) {
           </div>
 
           {/* Channel + Priority side by side */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="border-t border-slate-100 pt-5 dark:border-slate-800"><p className="text-xs font-bold uppercase tracking-widest text-slate-400">03 / Delivery & visibility</p></div>
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-sm text-gray-700">Channel</label>
+              <label htmlFor="notification-channel" className="mb-2 block text-sm font-medium text-gray-700">Channel</label>
               <select
+                id="notification-channel"
                 value={form.channel}
                 onChange={(e) => set('channel', e.target.value)}
                 className={selectCls}
@@ -165,8 +188,9 @@ function CreateModal({ onClose, onSuccess }) {
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-sm text-gray-700">Priority</label>
+              <label htmlFor="notification-priority" className="mb-2 block text-sm font-medium text-gray-700">Priority</label>
               <select
+                id="notification-priority"
                 value={form.priority}
                 onChange={(e) => set('priority', e.target.value)}
                 className={selectCls}
@@ -178,36 +202,62 @@ function CreateModal({ onClose, onSuccess }) {
             </div>
           </div>
 
+          <div>
+            <label htmlFor="notification-expiry" className="mb-1 block text-sm text-gray-700">Visible for</label>
+            <select id="notification-expiry" value={form.expiresIn} onChange={(e) => set('expiresIn', e.target.value)} className={selectCls}>
+              <option value="never">Never expires</option>
+              <option value="24h">24 hours</option>
+              <option value="2d">2 days</option>
+              <option value="1w">1 week</option>
+              <option value="1m">1 month</option>
+              <option value="custom">Custom date and time</option>
+            </select>
+            <p className="mt-1 text-xs text-gray-500">Expired notifications are hidden from the customer's notification list and popups.</p>
+          </div>
+          {form.expiresIn === 'custom' && (
+            <div>
+              <label htmlFor="notification-expires-at" className="mb-1 block text-sm text-gray-700">Expiry date and time</label>
+              <input id="notification-expires-at" type="datetime-local" required value={form.expiresAt} onChange={(e) => set('expiresAt', e.target.value)} className={inputCls} />
+              <p className="mt-1 text-xs text-gray-500">Uses your local time zone ({Intl.DateTimeFormat().resolvedOptions().timeZone}).</p>
+            </div>
+          )}
+
+          {['push', 'both', 'all'].includes(form.channel) && (
+            <p className="rounded-md bg-blue-50 px-3 py-2 text-xs text-blue-700">Push delivery requires the customer app to have registered an Expo device token.</p>
+          )}
+
           {/* Email info hint */}
           {(form.channel === 'email' || form.channel === 'both' || form.channel === 'all') && (
             <p className="rounded-md bg-blue-50 px-3 py-2 text-xs text-blue-700">
-              A branded BillXpress email with your orange theme will be sent to the recipient(s).
+              Recipients can receive a branded BillXpress email with the orange theme and social links.
             </p>
           )}
 
           {error && (
-            <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+            <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>
           )}
 
-          <div className="flex gap-3 pt-1">
+        </fieldset>
+          <footer className="flex shrink-0 items-center justify-end gap-3 border-t border-slate-100 bg-slate-50/80 px-6 py-4 dark:border-slate-800 dark:bg-slate-950/30 sm:px-8">
             <button
               type="button"
+              disabled={loading}
               onClick={onClose}
-              className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-40 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 rounded-md bg-orange-500 px-3 py-2 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-60"
+              className="rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-orange-500/20 hover:bg-orange-600 disabled:opacity-60"
             >
               {loading ? 'Sending…' : 'Send Notification'}
             </button>
-          </div>
+          </footer>
         </form>
       </div>
-    </div>
+    </dialog>, document.body
   );
 }
 
@@ -265,10 +315,14 @@ function FilterBar({ onSearch }) {
 
 function Pagination({ meta, page, onPageChange }) {
   if (meta.totalPages <= 1) return null;
+
+  const firstItem = (meta.page - 1) * LIMIT + 1;
+  const lastItem = Math.min(meta.page * LIMIT, meta.total);
+
   return (
     <div className="flex items-center justify-between border-t border-gray-100 px-4 py-3">
       <p className="text-xs text-gray-400">
-        Page {meta.page} of {meta.totalPages} &nbsp;·&nbsp; {meta.total} total
+        Showing {firstItem}–{lastItem} of {meta.total} notifications
       </p>
       <div className="flex gap-2">
         <button
@@ -278,6 +332,9 @@ function Pagination({ meta, page, onPageChange }) {
         >
           ← Prev
         </button>
+        <span className="flex items-center px-1 text-xs text-gray-500">
+          Page {meta.page} of {meta.totalPages}
+        </span>
         <button
           onClick={() => onPageChange(page + 1)}
           disabled={page >= meta.totalPages}
@@ -367,7 +424,7 @@ export default function Notifications() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-left text-sm">
+            <ResponsiveTable className="w-full min-w-[720px] text-left text-sm">
               <thead className="border-b border-gray-200 bg-gray-50">
                 <tr>
                   {['Title', 'Message', 'Channel', 'Priority', 'User ID', 'Sent At'].map((h) => (
@@ -414,7 +471,7 @@ export default function Notifications() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </ResponsiveTable>
           </div>
         )}
 

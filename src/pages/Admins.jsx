@@ -1,3 +1,4 @@
+import ResponsiveTable from '../components/ResponsiveTable';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { apiClient } from '../lib/apiClient';
@@ -193,7 +194,7 @@ export default function Admins() {
             No admins found.
           </div>
         ) : (
-          <table className="w-full text-left text-sm">
+          <ResponsiveTable className="w-full text-left text-sm">
             <thead className="border-b border-gray-200 bg-gray-50">
               <tr>
                 {['Name', 'Username', 'Email', 'Phone', 'Auth Tier', 'Status', ''].map((h) => (
@@ -237,7 +238,7 @@ export default function Admins() {
                 );
               })}
             </tbody>
-          </table>
+          </ResponsiveTable>
         )}
 
         {!loading && !error && (

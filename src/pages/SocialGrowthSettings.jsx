@@ -1,3 +1,4 @@
+import ResponsiveTable from '../components/ResponsiveTable';
 import { useState } from 'react';
 import { useSocialGrowthSettings } from '../hooks/useSocialGrowthSettings';
 import TierEditor from '../components/TierEditor';
@@ -66,7 +67,7 @@ function PricingTiersTable({ tiers, label }) {
         </p>
       </div>
       {hasTiers ? (
-        <table className="w-full text-left text-sm">
+        <ResponsiveTable className="w-full text-left text-sm">
           <thead className="border-b border-gray-100 bg-gray-50">
             <tr>
               {['Min Cost', 'Max Cost', 'Markup %'].map((h) => (
@@ -87,7 +88,7 @@ function PricingTiersTable({ tiers, label }) {
               </tr>
             ))}
           </tbody>
-        </table>
+        </ResponsiveTable>
       ) : (
         <div className="flex items-center justify-center py-10 text-sm text-gray-400">
           No pricing tiers configured.

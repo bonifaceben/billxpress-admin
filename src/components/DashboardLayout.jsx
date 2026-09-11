@@ -24,6 +24,7 @@ const sections = [
     { to: '/users', label: 'Users', icon: 'users' },
     { to: '/admins', label: 'Admins', icon: 'shield' },
     { to: '/notifications', label: 'Notifications', icon: 'bell' },
+    { to: '/sliders', label: 'Sliders', icon: 'card' },
     { to: '/referral-rewards', label: 'Referral Rewards', icon: 'gift' },
   ] },
   { heading: 'Services', items: [

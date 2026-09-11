@@ -17,13 +17,28 @@ export function useNotifications({ page = 1, limit = 20, type = '', userId = '' 
 
       const { data } = await apiClient.get('/api/v1/admin/notifications', { params });
 
-      // Support both { notifications, total, page, totalPages } and { data, meta } shapes
-      const items = data.notifications ?? data.data ?? [];
-      setNotifications(items);
+      const payload = data?.data ?? data ?? {};
+      const items = Array.isArray(payload)
+        ? payload
+        : (payload.notifications ?? data?.notifications ?? []);
+      const pagination = payload.pagination ?? data?.pagination ?? payload.meta ?? data?.meta ?? {};
+      const total = Number(
+        pagination.total ?? pagination.totalItems ?? payload.total ?? data?.total ?? items.length,
+      );
+      const currentPage = Number(
+        pagination.page ?? pagination.currentPage ?? payload.page ?? data?.page ?? page,
+      );
+      const pageSize = Number(pagination.limit ?? pagination.pageSize ?? limit);
+      const totalPages = Number(
+        pagination.pages ?? pagination.totalPages ?? pagination.pageCount ??
+        payload.totalPages ?? data?.totalPages ?? Math.ceil(total / pageSize),
+      );
+
+      setNotifications(Array.isArray(items) ? items : []);
       setMeta({
-        total: data.total ?? data.meta?.total ?? items.length,
-        page: data.page ?? data.meta?.page ?? page,
-        totalPages: data.totalPages ?? data.meta?.totalPages ?? Math.ceil((data.total ?? items.length) / limit),
+        total: Number.isFinite(total) ? total : items.length,
+        page: Number.isFinite(currentPage) ? currentPage : page,
+        totalPages: Number.isFinite(totalPages) ? Math.max(1, totalPages) : 1,
       });
     } catch (err) {
       setError(err?.response?.data?.message ?? 'Failed to load notifications.');

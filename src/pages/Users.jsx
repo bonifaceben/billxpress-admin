@@ -1,3 +1,4 @@
+import ResponsiveTable from '../components/ResponsiveTable';
 import { useState } from 'react';
 import { adjustUserWallet, useUsers } from '../hooks/useUsers';
 
@@ -234,14 +235,14 @@ export default function Users() {
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[760px] text-left text-sm">
+              <ResponsiveTable className="w-full min-w-[760px] text-left text-sm">
                 <thead className="border-b border-gray-200 bg-gray-50"><tr>
                   {['User', 'Contact', 'Role', 'Status', 'Auth tier', 'Joined', 'Wallet balance', 'Wallet actions'].map((heading) => <th key={heading} className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">{heading}</th>)}
                 </tr></thead>
                 <tbody className="divide-y divide-gray-100">
                   {users.length ? users.map((user) => <UserRow key={user.id ?? user._id ?? user.email} user={user} onAdjustWallet={(selectedUser, operation) => { setSuccess(''); setAdjustment({ user: selectedUser, operation }); }} />) : <tr><td colSpan="8" className="px-4 py-16 text-center text-gray-400">No users found.</td></tr>}
                 </tbody>
-              </table>
+              </ResponsiveTable>
             </div>
             {pagination.pages > 1 && <div className="flex items-center justify-between border-t border-gray-100 px-4 py-3">
               <p className="text-xs text-gray-500">Page {pagination.page} of {pagination.pages}</p>

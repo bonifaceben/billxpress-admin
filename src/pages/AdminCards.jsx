@@ -1,3 +1,4 @@
+import ResponsiveTable from '../components/ResponsiveTable';
 import { useState } from 'react';
 import { useAdminCards } from '../hooks/useAdminCards';
 
@@ -216,7 +217,7 @@ export default function AdminCards() {
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
+              <ResponsiveTable className="w-full text-left text-sm">
                 <thead className="border-b border-gray-200 bg-gray-50">
                   <tr>
                     {TABLE_HEADERS.map((h) => (
@@ -237,7 +238,7 @@ export default function AdminCards() {
                     cards.map((card) => <CardRow key={card.id} card={card} />)
                   )}
                 </tbody>
-              </table>
+              </ResponsiveTable>
             </div>
 
             {/* Pagination */}

@@ -1,3 +1,4 @@
+import ResponsiveTable from '../components/ResponsiveTable';
 import { useState } from 'react';
 import { useCardSettings } from '../hooks/useCardSettings';
 import { useCardRates } from '../hooks/useCardRates';
@@ -215,7 +216,7 @@ function FeeTable({ title, note, rows }) {
         {note && <p className="mt-0.5 text-xs text-gray-400">{note}</p>}
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
+        <ResponsiveTable className="w-full text-left text-sm">
           <thead className="border-b border-gray-100 bg-gray-50">
             <tr>
               <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Fee Type</th>
@@ -250,7 +251,7 @@ function FeeTable({ title, note, rows }) {
               </tr>
             ))}
           </tbody>
-        </table>
+        </ResponsiveTable>
       </div>
     </div>
   );

@@ -1,3 +1,4 @@
+import ResponsiveTable from '../components/ResponsiveTable';
 import { useState } from 'react';
 import { useDataSettings } from '../hooks/useDataSettings';
 import TierEditor from '../components/TierEditor';
@@ -90,7 +91,7 @@ function PricingTiersTable({ tiers, fallbackMarkup, label }) {
         </span>
       </div>
       {hasTiers ? (
-        <table className="w-full text-left text-sm">
+        <ResponsiveTable className="w-full text-left text-sm">
           <thead className="border-b border-gray-100 bg-gray-50">
             <tr>
               {['Min Cost', 'Max Cost', 'Markup %'].map((h) => (
@@ -111,7 +112,7 @@ function PricingTiersTable({ tiers, fallbackMarkup, label }) {
               </tr>
             ))}
           </tbody>
-        </table>
+        </ResponsiveTable>
       ) : (
         <div className="flex items-center justify-center py-10 text-sm text-gray-400">No pricing tiers configured.</div>
       )}

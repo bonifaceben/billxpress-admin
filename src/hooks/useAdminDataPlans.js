@@ -6,6 +6,8 @@ export function useAdminDataPlans({
   network = '',
   type = '',
   isEnabled = '',
+  isHot = '',
+  category = '',
   providerAvailable = '',
   customerVisible = '',
   sortBy = 'provider',
@@ -20,8 +22,8 @@ export function useAdminDataPlans({
   const [syncResult, setSyncResult] = useState(null);
   const [syncError, setSyncError] = useState(null);
 
-  const fetch = useCallback(async () => {
-    setLoading(true);
+  const fetch = useCallback(async (background = false) => {
+    if (background !== true) setLoading(true);
     setError(null);
     try {
       const params = { sortBy, sortDirection };
@@ -29,6 +31,8 @@ export function useAdminDataPlans({
       if (network) params.network = network;
       if (type) params.type = type;
       if (isEnabled !== '') params.isEnabled = isEnabled;
+      if (isHot !== '') params.isHot = isHot;
+      if (category) params.category = category;
       if (providerAvailable !== '') params.providerAvailable = providerAvailable;
       if (customerVisible !== '') params.customerVisible = customerVisible;
 
@@ -42,7 +46,7 @@ export function useAdminDataPlans({
     } finally {
       setLoading(false);
     }
-  }, [provider, network, type, isEnabled, providerAvailable, customerVisible, sortBy, sortDirection]);
+  }, [provider, network, type, isEnabled, isHot, category, providerAvailable, customerVisible, sortBy, sortDirection]);
 
   useEffect(() => { fetch(); }, [fetch]);
 
@@ -67,6 +71,7 @@ export function useAdminDataPlans({
     const { data } = await apiClient.patch(`/api/v1/admin/services/data/plans/${id}`, payload);
     const updated = data?.data?.plan ?? data?.plan ?? data?.data ?? data;
     setPlans((prev) => prev.map((p) => (p.id === id ? { ...p, ...updated } : p)));
+    await fetch(true);
     return data;
   }
 

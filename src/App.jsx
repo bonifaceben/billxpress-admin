@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
 import Admins from './pages/Admins';
 import Notifications from './pages/Notifications';
+import Sliders from './pages/Sliders';
 import ReferralRewards from './pages/ReferralRewards';
 import DataPlans from './pages/DataPlans';
 import AdminDataPlans from './pages/AdminDataPlans';
@@ -38,6 +39,7 @@ function App() {
           <Route path="/users" element={<Users />} />
           <Route path="/admins" element={<Admins />} />
           <Route path="/notifications" element={<Notifications />} />
+          <Route path="/sliders" element={<Sliders />} />
           <Route path="/referral-rewards" element={<ReferralRewards />} />
           <Route path="/services/data-plans" element={<DataPlans />} />
           <Route path="/services/data-plan-management" element={<AdminDataPlans />} />

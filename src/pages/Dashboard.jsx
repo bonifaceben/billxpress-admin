@@ -1,3 +1,4 @@
+import ResponsiveTable from '../components/ResponsiveTable';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -295,7 +296,7 @@ function TopCustomersSection({ topCustomers, currency }) {
         const customer = entry.user ?? {}; const name = [customer.firstName, customer.lastName].filter(Boolean).join(' ') || customer.username || customer.email || 'Unknown user'; const colors = ['from-amber-400 to-orange-500', 'from-slate-400 to-slate-500', 'from-orange-700 to-amber-800'];
         return <div key={customer.id ?? entry.rank} className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800"><div className="flex items-center gap-3"><div className={`grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br ${colors[index]} font-bold text-white`}>#{entry.rank ?? index + 1}</div><div className="min-w-0"><p className="truncate font-semibold text-gray-900">{name}</p><p className="truncate text-xs text-gray-400">{customer.email ?? `@${customer.username ?? 'user'}`}</p></div></div><p className="mt-4 text-xl font-bold text-gray-900">{formatCurrency(entry.totalSpent, currency)}</p><p className="text-xs text-gray-400">{formatNumber(entry.transactionCount)} transactions</p></div>;
       })}</div>
-      <div className="overflow-x-auto"><table className="w-full min-w-[680px] text-left text-sm"><thead className="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500"><tr><th className="px-5 py-3">Rank</th><th className="px-5 py-3">Customer</th><th className="px-5 py-3">Transactions</th><th className="px-5 py-3">Total spent</th><th className="px-5 py-3">Last purchase</th></tr></thead><tbody className="divide-y divide-gray-100 dark:divide-slate-800">{customers.map((entry, index) => { const customer = entry.user ?? {}; const name = [customer.firstName, customer.lastName].filter(Boolean).join(' ') || customer.username || 'Unknown user'; return <tr key={customer.id ?? `${range}-${index}`} className="hover:bg-gray-50"><td className="px-5 py-3 font-bold text-orange-600">#{entry.rank ?? index + 1}</td><td className="px-5 py-3"><p className="font-medium text-gray-900">{name}</p><p className="text-xs text-gray-400">{customer.email ?? '—'}</p></td><td className="px-5 py-3 text-gray-600">{formatNumber(entry.transactionCount)}</td><td className="px-5 py-3 font-semibold text-gray-900">{formatCurrency(entry.totalSpent, currency)}</td><td className="whitespace-nowrap px-5 py-3 text-gray-500">{formatDate(entry.lastTransactionAt)}</td></tr>; })}</tbody></table></div>
+      <div className="overflow-x-auto"><ResponsiveTable className="w-full min-w-[680px] text-left text-sm"><thead className="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500"><tr><th className="px-5 py-3">Rank</th><th className="px-5 py-3">Customer</th><th className="px-5 py-3">Transactions</th><th className="px-5 py-3">Total spent</th><th className="px-5 py-3">Last purchase</th></tr></thead><tbody className="divide-y divide-gray-100 dark:divide-slate-800">{customers.map((entry, index) => { const customer = entry.user ?? {}; const name = [customer.firstName, customer.lastName].filter(Boolean).join(' ') || customer.username || 'Unknown user'; return <tr key={customer.id ?? `${range}-${index}`} className="hover:bg-gray-50"><td className="px-5 py-3 font-bold text-orange-600">#{entry.rank ?? index + 1}</td><td className="px-5 py-3"><p className="font-medium text-gray-900">{name}</p><p className="text-xs text-gray-400">{customer.email ?? '—'}</p></td><td className="px-5 py-3 text-gray-600">{formatNumber(entry.transactionCount)}</td><td className="px-5 py-3 font-semibold text-gray-900">{formatCurrency(entry.totalSpent, currency)}</td><td className="whitespace-nowrap px-5 py-3 text-gray-500">{formatDate(entry.lastTransactionAt)}</td></tr>; })}</tbody></ResponsiveTable></div>
     </>}
   </section>;
 }
@@ -322,7 +323,7 @@ function LatestUsersSection({ users, total, loading, error, onRetry }) {
         <div className="py-12 text-center text-sm text-gray-400">No users found.</div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] text-left text-sm">
+          <ResponsiveTable className="w-full min-w-[640px] text-left text-sm">
             <thead className="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
               <tr>
                 <th className="px-5 py-3">User</th>
@@ -357,7 +358,7 @@ function LatestUsersSection({ users, total, loading, error, onRetry }) {
                 );
               })}
             </tbody>
-          </table>
+          </ResponsiveTable>
         </div>
       )}
     </div>

@@ -1,3 +1,4 @@
+import ResponsiveTable from '../components/ResponsiveTable';
 import { useState } from 'react';
 import { useFundingSettings } from '../hooks/useFundingSettings';
 import { useTransferSettings } from '../hooks/useTransferSettings';
@@ -376,7 +377,7 @@ function InstitutionsPanel() {
 
           {institutions.length > 0 && (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
+              <ResponsiveTable className="w-full text-left text-sm">
                 <thead className="border-b border-gray-100 bg-gray-50">
                   <tr>
                     {['Institution', 'Code'].map((h) => (
@@ -392,7 +393,7 @@ function InstitutionsPanel() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </ResponsiveTable>
             </div>
           )}
         </div>

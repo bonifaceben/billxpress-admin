@@ -1,3 +1,4 @@
+import ResponsiveTable from '../components/ResponsiveTable';
 import { useState } from 'react';
 import { useReferralRewards } from '../hooks/useReferralRewards';
 
@@ -217,7 +218,7 @@ export default function ReferralRewards() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[860px] text-left text-sm">
+            <ResponsiveTable className="w-full min-w-[860px] text-left text-sm">
               <thead className="border-b border-gray-200 bg-gray-50">
                 <tr>
                   {['Referrer', 'Referred User', 'Trigger', 'Qualifying Amt', 'Reward %', 'Reward Amt', 'Status', 'Date'].map((h) => (
@@ -262,7 +263,7 @@ export default function ReferralRewards() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </ResponsiveTable>
           </div>
         )}
 

@@ -1,3 +1,4 @@
+import ResponsiveTable from '../components/ResponsiveTable';
 import { useMemo, useState } from 'react';
 import { useDataPlans } from '../hooks/useDataPlans';
 
@@ -160,7 +161,7 @@ export default function DataPlans() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[1100px] text-left text-sm">
+                <ResponsiveTable className="w-full min-w-[1100px] text-left text-sm">
                   <thead className="border-b border-gray-200 bg-gray-50">
                     <tr>
                       {['Network', 'Bundle', 'Type', 'Validity', 'Cost Price', 'Selling Price', 'Profit', 'Markup', 'Model', 'Tier Range', 'Status'].map((h) => (
@@ -187,7 +188,7 @@ export default function DataPlans() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </ResponsiveTable>
               </div>
             )}
 

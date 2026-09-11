@@ -1,10 +1,11 @@
+import ResponsiveTable from '../components/ResponsiveTable';
 import { useState, useEffect } from 'react';
 import { useAdminDataPlans } from '../hooks/useAdminDataPlans';
 
 // ─── constants ────────────────────────────────────────────────────────────────
 
 const NETWORKS = ['', 'MTN', 'AIRTEL', 'GLO', '9MOBILE'];
-const TYPES = ['', 'AWOOF', 'GIFTING', 'SME', 'CORPORATE GIFTING', 'SOCIAL', 'OTHER'];
+const TYPES = ['', 'AWOOF', 'GIFTING', 'SME', 'CORPORATE GIFTING', 'DATA SHARE', 'SOCIAL', 'OTHER'];
 const PROVIDERS = ['', 'smeapi', 'smeplug', 'autopilot', 'ujaydata', 'ogdams', '2fast', 'vtpass'];
 
 const NETWORK_COLORS = {
@@ -19,6 +20,7 @@ const EMPTY_FILTERS = {
   network: '',
   type: '',
   isEnabled: '',
+  isHot: '',
   providerAvailable: '',
   customerVisible: '',
   sortBy: 'provider',
@@ -55,6 +57,7 @@ function NetworkBadge({ network }) {
 }
 
 function AvailableBadge({ value }) {
+  if (value == null) return <span className="text-gray-400">Unknown</span>;
   return (
     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
       value ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'
@@ -65,6 +68,46 @@ function AvailableBadge({ value }) {
 }
 
 // ─── inline-editable plan row ─────────────────────────────────────────────────
+
+const DISPLAY_FIELDS = [
+  ['displayNetwork', 'Network'], ['displayName', 'Name'],
+  ['displayDataType', 'Data type'], ['displayValidity', 'Validity'],
+  ['displayValidityDays', 'Validity days'], ['note', 'Customer note'],
+];
+
+function PlanField({ plan, field, label, onUpdate, boolean = false }) {
+  const [draft, setDraft] = useState(plan[field] ?? '');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+  async function save(value) {
+    const next = boolean ? value === 'true' : value === '' ? null : field === 'displayValidityDays' ? Number(value) : value;
+    if (next === (plan[field] ?? null)) return;
+    if (field === 'displayValidityDays' && next !== null && (!Number.isInteger(next) || next < 0)) {
+      setError('Enter a non-negative whole number.');
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try { await onUpdate(plan.id, { [field]: next }); }
+    catch (err) { setError(err?.response?.data?.message ?? 'Save failed'); }
+    finally { setSaving(false); }
+  }
+  const cls = 'w-44 rounded-md border border-gray-200 bg-white px-2 py-1 text-xs disabled:opacity-50';
+  return (
+    <label className="flex flex-col gap-1 text-xs text-gray-500">
+      {label}
+      {boolean ? (
+        <select aria-label={label} value={String(plan[field] ?? false)} disabled={saving} onChange={(e) => save(e.target.value)} className={cls}>
+          <option value="true">Hot</option><option value="false">Not hot</option>
+        </select>
+      ) : (
+        <input aria-label={label} type={field === 'displayValidityDays' ? 'number' : 'text'} min={field === 'displayValidityDays' ? 0 : undefined} step={field === 'displayValidityDays' ? 1 : undefined} value={draft} disabled={saving} placeholder={field === 'note' ? 'No note' : 'Use provider value'} onChange={(e) => setDraft(e.target.value)} onBlur={() => save(draft)} onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }} className={cls} />
+      )}
+      {saving && <span>Saving…</span>}
+      {error && <span role="alert" className="text-red-600">{error}</span>}
+    </label>
+  );
+}
 
 function PlanRow({ plan, onUpdate }) {
   const [isEnabled, setIsEnabled] = useState(plan.isEnabled);
@@ -163,7 +206,7 @@ function PlanRow({ plan, onUpdate }) {
         {formatNaira(plan.networkPrice) ?? '—'}
       </td>
       <td className="px-4 py-3 text-gray-500">
-        {formatNaira(plan.providerPrice ?? plan.price ?? plan.costPrice) ?? '—'}
+        {formatNaira(plan.providerPrice) ?? '—'}
       </td>
       <td className="px-4 py-3 font-medium text-gray-700">{formatNaira(plan.costPrice) ?? '—'}</td>
 
@@ -215,7 +258,7 @@ function PlanRow({ plan, onUpdate }) {
                   : 'border-red-200 bg-red-50 text-red-700'
               }`}
             >
-              <option value="true" disabled={!plan.providerAvailable}>Enabled</option>
+              <option value="true">Enabled</option>
               <option value="false">Disabled</option>
             </select>
             {savingEnabled && <span className="text-xs text-gray-400">Saving…</span>}
@@ -228,7 +271,26 @@ function PlanRow({ plan, onUpdate }) {
         </div>
       </td>
 
+      <td className="px-4 py-3"><PlanField plan={plan} field="isHot" label="Hot tab" boolean onUpdate={onUpdate} /></td>
+      <td className="px-4 py-3 text-xs text-gray-600">{plan.costSource ?? '—'}</td>
+      <td className="px-4 py-3">
+        <details className="min-w-48">
+          <summary className="cursor-pointer text-orange-600">Customer display & note</summary>
+          <p className="my-2 text-xs text-gray-500">Clear an override to use the provider value. Changes save on blur.</p>
+          <div className="flex flex-col gap-2">
+            {DISPLAY_FIELDS.map(([field, label]) => <PlanField key={`${field}:${plan[field] ?? ''}`} plan={plan} field={field} label={label} onUpdate={onUpdate} />)}
+          </div>
+        </details>
+      </td>
+      <td className="min-w-48 px-4 py-3 text-xs text-gray-600">
+        <p>{plan.customerNetwork ?? '—'} · {plan.customerName ?? '—'}</p>
+        <p>{plan.customerDataType ?? '—'} · {plan.customerValidity ?? '—'}</p>
+        <p>Validity days: {plan.customerValidityDays ?? '—'}</p>
+        {plan.note && <p className="mt-1">{plan.note}</p>}
+      </td>
       <td className="px-4 py-3"><AvailableBadge value={plan.providerAvailable} /></td>
+      <td className="px-4 py-3"><AvailableBadge value={plan.available} /></td>
+      <td className="px-4 py-3"><AvailableBadge value={plan.customerAvailable} /></td>
       <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">{formatDate(plan.lastSyncedAt)}</td>
     </tr>
   );
@@ -265,6 +327,10 @@ function FilterBar({ filters, onChange, onSearch, onClear }) {
         <option value="">Enabled: all</option>
         <option value="true">Enabled only</option>
         <option value="false">Disabled only</option>
+      </select>
+
+      <select aria-label="Hot filter" value={filters.isHot} onChange={(e) => onChange('isHot', e.target.value)} className={inputCls + ' w-36'}>
+        <option value="">Hot: all</option><option value="true">Hot only</option><option value="false">Not hot</option>
       </select>
 
       <select value={filters.providerAvailable} onChange={(e) => onChange('providerAvailable', e.target.value)} className={inputCls + ' w-44'}>
@@ -428,6 +494,7 @@ export default function AdminDataPlans() {
       <div className="mb-4 rounded-md bg-blue-50 px-4 py-3 text-xs text-blue-700">
         <strong>Pricing:</strong> <code>ourPrice</code> and <code>vendorPrice</code> are optional fixed prices.
         Leave either blank to use that audience's tiered or fallback percentage pricing. Choose <strong>Network SIM</strong> to cost against <code>networkPrice</code>, or <strong>Provider API</strong> to cost against <code>providerPrice</code>.
+        <p className="mt-2">Enabled is the BillXpress setting. Customer availability also requires upstream availability and a provider selected for the network. Hot selects a plan for the app's Hot tab.</p>
       </div>
 
       <FilterBar
@@ -455,10 +522,10 @@ export default function AdminDataPlans() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1350px] text-left text-sm">
+            <ResponsiveTable className="w-full min-w-[1350px] text-left text-sm">
               <thead className="border-b border-gray-200 bg-gray-50">
                 <tr>
-                  {['DB ID', 'Network', 'Provider', 'Bundle', 'Data Type', 'Validity', 'Network Price', 'Provider Price', 'Cost Price', 'Fulfillment', 'Our Price', 'Vendor Price', 'Enabled', 'Available', 'Last Synced'].map((h) => (
+                  {['DB ID', 'Network', 'Provider', 'Bundle', 'Data Type', 'Validity', 'Network Price', 'Provider Price', 'Cost Price', 'Fulfillment', 'Our Price', 'Vendor Price', 'Enabled', 'Hot', 'Cost Source', 'Display Overrides', 'Customer Preview', 'Provider Available', 'Available', 'Customer Available', 'Last Synced'].map((h) => (
                     <th key={h} className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
                       {h}
                     </th>
@@ -470,7 +537,7 @@ export default function AdminDataPlans() {
                   <PlanRow key={plan.id} plan={plan} onUpdate={updatePlan} />
                 ))}
               </tbody>
-            </table>
+            </ResponsiveTable>
           </div>
         )}
 

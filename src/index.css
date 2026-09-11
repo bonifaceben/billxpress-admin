@@ -18,6 +18,40 @@ button, a, input, select, textarea { transition-duration: 180ms; }
 button:not(:disabled) { cursor: pointer; }
 .page-enter { animation: page-enter 420ms cubic-bezier(.2,.8,.2,1) both; }
 
+/* Keep feature screens within the workspace and reflow dense records. */
+.page-enter { min-width: 0; width: 100%; overflow-wrap: anywhere; }
+.page-enter .grid > * { min-width: 0; }
+.page-enter input, .page-enter select, .page-enter textarea { max-width: 100%; }
+.responsive-table { min-width: 0 !important; width: 100%; table-layout: fixed; }
+.responsive-table th, .responsive-table td { overflow-wrap: anywhere; white-space: normal; }
+.responsive-table .truncate { overflow: visible; white-space: normal; text-overflow: clip; }
+.responsive-table[data-cards="true"] { display: block; }
+.responsive-table[data-cards="true"] thead {
+  position: absolute; width: 1px; height: 1px; padding: 0;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+}
+.responsive-table[data-cards="true"] tbody { display: grid; gap: 1rem; padding: 1rem; }
+.responsive-table[data-cards="true"] tbody tr {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
+  gap: 0; border: 1px solid #e2e8f0; border-radius: 1rem;
+  background: #fff; overflow: hidden; box-shadow: 0 2px 5px rgb(15 23 42 / .03);
+}
+.responsive-table[data-cards="true"] tbody td {
+  display: block; min-width: 0; max-width: none; padding: 1rem;
+  border-bottom: 1px solid #f1f5f9; white-space: normal;
+}
+.responsive-table[data-cards="true"] tbody td::before {
+  content: attr(data-label); display: block; margin-bottom: .5rem;
+  font-family: system-ui, sans-serif; font-size: .65rem; font-weight: 700;
+  line-height: 1.4; text-transform: uppercase; letter-spacing: .08em; color: #64748b;
+}
+.responsive-table[data-cards="true"] td[colspan] { grid-column: 1 / -1; }
+.responsive-table[data-cards="true"] td .flex { flex-wrap: wrap; }
+.responsive-table[data-cards="true"] td > * { min-width: 0; max-width: 100%; }
+.dark .responsive-table[data-cards="true"] tbody tr { background: #0f172a; border-color: #334155; }
+.dark .responsive-table[data-cards="true"] tbody td { border-color: #1e293b; }
+.dark .responsive-table[data-cards="true"] tbody td::before { color: #94a3b8; }
+
 @keyframes page-enter {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
