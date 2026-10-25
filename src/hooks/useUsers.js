@@ -15,6 +15,11 @@ export async function adjustUserWallet(userId, operation, payload) {
   return data;
 }
 
+export async function makeVendor(userId) {
+  const { data } = await apiClient.patch(`/api/v1/admin/make-vendor/${encodeURIComponent(userId)}`);
+  return data;
+}
+
 export function useUsers({ page = 1, limit = 20, search = '', role = '', status = '', authTier = '' } = {}) {
   const [users, setUsers] = useState([]);
   const [pagination, setPagination] = useState(EMPTY_PAGINATION);
