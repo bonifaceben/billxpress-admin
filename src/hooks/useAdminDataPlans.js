@@ -71,7 +71,7 @@ export function useAdminDataPlans({
     const { data } = await apiClient.patch(`/api/v1/admin/services/data/plans/${id}`, payload);
     const updated = data?.data?.plan ?? data?.plan ?? data?.data ?? data;
     setPlans((prev) => prev.map((p) => (p.id === id ? { ...p, ...updated } : p)));
-    await fetch(true);
+    void fetch(true);
     return data;
   }
 

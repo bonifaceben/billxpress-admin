@@ -6,7 +6,7 @@ import { useAdminDataPlans } from '../hooks/useAdminDataPlans';
 
 const NETWORKS = ['', 'MTN', 'AIRTEL', 'GLO', '9MOBILE'];
 const TYPES = ['', 'AWOOF', 'GIFTING', 'SME', 'CORPORATE GIFTING', 'DATA SHARE', 'SOCIAL', 'OTHER'];
-const PROVIDERS = ['', 'smeapi', 'smeplug', 'autopilot', 'ujaydata', 'ogdams', '2fast', 'vtpass'];
+const PROVIDERS = ['', 'smeapi', 'smeplug', 'autopilot', 'quicklysim', 'ujaydata', 'ogdams', '2fast', 'vtpass'];
 
 const NETWORK_COLORS = {
   MTN: 'bg-yellow-100 text-yellow-800',
@@ -115,6 +115,7 @@ function PlanRow({ plan, onUpdate }) {
   const [vendorPriceDraft, setVendorPriceDraft] = useState(plan.vendorPrice ?? '');
   const [dataType, setDataType] = useState(plan.dataType ?? plan.type ?? plan.datatype ?? 'OTHER');
   const [fulfillmentRoute, setFulfillmentRoute] = useState(plan.fulfillmentRoute ?? (plan.allowHostedSim === true ? 'network' : 'provider'));
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [savingEnabled, setSavingEnabled] = useState(false);
   const [savingPrice, setSavingPrice] = useState(false);
   const [savingVendorPrice, setSavingVendorPrice] = useState(false);
@@ -274,12 +275,12 @@ function PlanRow({ plan, onUpdate }) {
       <td className="px-4 py-3"><PlanField plan={plan} field="isHot" label="Hot tab" boolean onUpdate={onUpdate} /></td>
       <td className="px-4 py-3 text-xs text-gray-600">{plan.costSource ?? '—'}</td>
       <td className="px-4 py-3">
-        <details className="min-w-48">
+        <details className="min-w-48" onToggle={(event) => setDetailsOpen(event.currentTarget.open)}>
           <summary className="cursor-pointer text-orange-600">Customer display & note</summary>
           <p className="my-2 text-xs text-gray-500">Clear an override to use the provider value. Changes save on blur.</p>
-          <div className="flex flex-col gap-2">
+          {detailsOpen && <div className="flex flex-col gap-2">
             {DISPLAY_FIELDS.map(([field, label]) => <PlanField key={`${field}:${plan[field] ?? ''}`} plan={plan} field={field} label={label} onUpdate={onUpdate} />)}
-          </div>
+          </div>}
         </details>
       </td>
       <td className="min-w-48 px-4 py-3 text-xs text-gray-600">
@@ -305,7 +306,7 @@ function FilterBar({ filters, onChange, onSearch, onClear }) {
   return (
     <form
       onSubmit={(e) => { e.preventDefault(); onSearch(); }}
-      className="mb-5 flex flex-wrap gap-3"
+      className="mb-6 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
     >
       <select value={filters.provider} onChange={(e) => onChange('provider', e.target.value)} className={inputCls + ' w-40'}><option value="">All providers</option>{PROVIDERS.filter(Boolean).map((provider) => <option key={provider} value={provider}>{provider}</option>)}</select>
 
@@ -392,7 +393,7 @@ function SummaryCards({ plans }) {
   const fallbackPriced = plans.filter((p) => p.ourPrice == null || p.vendorPrice == null).length;
 
   const cards = [
-    { label: 'Total Plans', value: total },
+    { label: 'Matching plans', value: total },
     { label: 'Enabled', value: enabled, color: 'text-green-600' },
     { label: 'Disabled', value: disabled, color: 'text-red-600' },
     { label: 'Provider Available', value: providerAvail, color: 'text-blue-600' },
@@ -402,7 +403,7 @@ function SummaryCards({ plans }) {
   return (
     <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
       {cards.map((c) => (
-        <div key={c.label} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <div key={c.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">{c.label}</p>
           <p className={`mt-2 text-2xl font-bold ${c.color ?? 'text-gray-900'}`}>{c.value}</p>
         </div>
@@ -417,9 +418,15 @@ export default function AdminDataPlans() {
   const [formFilters, setFormFilters] = useState({ ...EMPTY_FILTERS });
   const [activeFilters, setActiveFilters] = useState({ ...EMPTY_FILTERS });
   const [syncDismissed, setSyncDismissed] = useState(false);
+  const [page, setPage] = useState(1);
+  const pageSize = 25;
 
   const { plans, count, loading, error, syncing, syncResult, syncError, refetch, syncPlans, updatePlan } =
     useAdminDataPlans(activeFilters);
+
+  const pageCount = Math.max(1, Math.ceil(plans.length / pageSize));
+  const currentPage = Math.min(page, pageCount);
+  const visiblePlans = plans.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   function handleFilterChange(field, value) {
     setFormFilters((prev) => ({ ...prev, [field]: value }));
@@ -427,10 +434,12 @@ export default function AdminDataPlans() {
 
   function handleSearch() {
     setActiveFilters({ ...formFilters });
+    setPage(1);
     setSyncDismissed(false);
   }
 
   function handleClear() {
+    setPage(1);
     setFormFilters({ ...EMPTY_FILTERS });
     setActiveFilters({ ...EMPTY_FILTERS });
   }
@@ -449,9 +458,9 @@ export default function AdminDataPlans() {
     <div>
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Data Plan Management</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Data Plan Management</h1>
           <p className="mt-0.5 text-sm text-gray-500">
-            Audit, price, enable, and route plans across every connected provider.
+            Manage pricing, availability and delivery across your providers.
           </p>
         </div>
 
@@ -491,7 +500,7 @@ export default function AdminDataPlans() {
         />
       )}
 
-      <div className="mb-4 rounded-md bg-blue-50 px-4 py-3 text-xs text-blue-700">
+      <div className="mb-5 rounded-2xl border border-blue-100 bg-blue-50/70 px-5 py-4 text-sm leading-relaxed text-blue-900">
         <strong>Pricing:</strong> <code>ourPrice</code> and <code>vendorPrice</code> are optional fixed prices.
         Leave either blank to use that audience's tiered or fallback percentage pricing. Choose <strong>Network SIM</strong> to cost against <code>networkPrice</code>, or <strong>Provider API</strong> to cost against <code>providerPrice</code>.
         <p className="mt-2">Enabled is the BillXpress setting. Customer availability also requires upstream availability and a provider selected for the network. Hot selects a plan for the app's Hot tab.</p>
@@ -508,7 +517,7 @@ export default function AdminDataPlans() {
         <SummaryCards plans={plans} />
       )}
 
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         {loading ? (
           <div className="flex items-center justify-center py-24 text-sm text-gray-400">Loading plans…</div>
         ) : error ? (
@@ -533,7 +542,7 @@ export default function AdminDataPlans() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {plans.map((plan) => (
+                {visiblePlans.map((plan) => (
                   <PlanRow key={plan.id} plan={plan} onUpdate={updatePlan} />
                 ))}
               </tbody>
@@ -542,11 +551,13 @@ export default function AdminDataPlans() {
         )}
 
         {!loading && !error && (
-          <div className="border-t border-gray-100 px-4 py-3">
-            <p className="text-xs text-gray-400">
-              Showing {plans.length} plan{plans.length !== 1 ? 's' : ''}
-              {count > plans.length ? ` (${count} total)` : ''}
-            </p>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-5 py-4">
+            <p className="text-sm text-slate-500">Showing {plans.length ? (currentPage - 1) * pageSize + 1 : 0}–{Math.min(currentPage * pageSize, plans.length)} of {count} plans</p>
+            <div className="flex items-center gap-3">
+              <button type="button" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={currentPage <= 1} className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40">Previous</button>
+              <span className="text-sm text-slate-500">Page {currentPage} of {pageCount}</span>
+              <button type="button" onClick={() => setPage((p) => Math.min(pageCount, p + 1))} disabled={currentPage >= pageCount} className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40">Next</button>
+            </div>
           </div>
         )}
       </div>
