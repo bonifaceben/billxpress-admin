@@ -6,7 +6,7 @@ import { useAdminDataPlans } from '../hooks/useAdminDataPlans';
 
 const NETWORKS = ['', 'MTN', 'AIRTEL', 'GLO', '9MOBILE'];
 const TYPES = ['', 'AWOOF', 'GIFTING', 'SME', 'CORPORATE GIFTING', 'DATA SHARE', 'SOCIAL', 'OTHER'];
-const PROVIDERS = ['', 'smeapi', 'smeplug', 'autopilot', 'quicklysim', 'ujaydata', 'ogdams', '2fast', 'vtpass'];
+const PROVIDERS = ['', 'smeapi', 'smeplug', 'autopilot', 'quicklysim', 'uniteddata2', 'ujaydata', 'ogdams', '2fast', 'vtpass'];
 
 const NETWORK_COLORS = {
   MTN: 'bg-yellow-100 text-yellow-800',

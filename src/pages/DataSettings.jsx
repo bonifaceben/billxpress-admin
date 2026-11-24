@@ -24,7 +24,7 @@ const MVP_VENDOR_TIERS = [
 // ─── constants ───────────────────────────────────────────────────────────────
 
 const NETWORKS = ['MTN', 'AIRTEL', 'GLO', '9MOBILE'];
-const SUPPORTED_PROVIDERS = ['smeapi', 'smeplug', 'autopilot', 'quicklysim', 'ujaydata', 'ogdams', '2fast', 'vtpass'];
+const SUPPORTED_PROVIDERS = ['smeapi', 'smeplug', 'autopilot', 'quicklysim', 'uniteddata2', 'ujaydata', 'ogdams', '2fast', 'vtpass'];
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
