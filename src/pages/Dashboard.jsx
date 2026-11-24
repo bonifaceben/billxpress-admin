@@ -276,11 +276,15 @@ function BalanceSection({ wallets, providerBalances, currency }) {
         <div className="relative"><div className="flex items-start justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-wider text-indigo-200">Customer Wallet Balance</p><p className="mt-2 text-3xl font-bold tracking-tight">{formatCurrency(wallets.totalBalance, wallets.currency ?? currency)}</p></div><span className="rounded-full bg-white/15 px-2.5 py-1 text-xs font-medium">{formatNumber(wallets.walletCount)} wallets</span></div>
         <div className="mt-5 grid grid-cols-2 gap-3 border-t border-white/15 pt-4"><div><p className="text-xs text-indigo-200">Main wallets</p><p className="mt-1 font-semibold">{formatCurrency(wallets.mainBalance, wallets.currency ?? currency)}</p></div><div><p className="text-xs text-indigo-200">Referral wallets</p><p className="mt-1 font-semibold">{formatCurrency(wallets.referralBalance, wallets.currency ?? currency)}</p></div></div></div>
       </div>}
-      {providers.map((provider) => <div key={provider.provider} className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Provider Balance</p><h3 className="mt-1 font-semibold uppercase text-gray-900">{provider.provider}</h3></div><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${provider.available ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{provider.available ? 'Available' : 'Unavailable'}</span></div>
-        {provider.available ? <><p className="mt-4 text-3xl font-bold tracking-tight text-gray-900">{formatCurrency(provider.balance, provider.currency ?? currency)}</p><p className="mt-1 text-sm text-gray-500">{provider.accountName ?? 'Provider account'}</p></> : <div className="mt-4 rounded-xl bg-amber-50 p-3 dark:bg-amber-950/30"><p className="text-sm font-medium text-amber-700 dark:text-amber-300">Balance unavailable</p><p className="mt-1 text-xs text-amber-600 dark:text-amber-400">{provider.error ?? 'This provider does not support balance checks.'}</p></div>}
-        <p className="mt-4 text-xs text-gray-400">Checked {formatDate(provider.checkedAt)}</p>
-      </div>)}
+      {providers.length > 0 && <div className="md:col-span-2 rounded-xl border border-slate-200 bg-white px-5 py-4 dark:border-slate-800 dark:bg-slate-900">
+        <h3 className="mb-2 text-sm font-semibold text-slate-900 dark:text-slate-100">API balances</h3>
+        <div className="divide-y divide-slate-100 dark:divide-slate-800">
+          {providers.map((provider) => <div key={provider.provider} className="flex items-center justify-between gap-4 py-3">
+            <div><p className="text-sm font-medium uppercase text-slate-700 dark:text-slate-200">{provider.provider}</p><p className="text-xs text-slate-400">{provider.source === 'transaction' ? 'Last transaction: ' : 'Checked: '}{formatDate(provider.checkedAt)}{provider.source === 'transaction' ? ' · May be out of date' : ''}</p></div>
+            <div className="text-right">{provider.available ? <span className="text-base font-semibold tabular-nums text-slate-900 dark:text-slate-100">{formatCurrency(provider.balance, provider.currency ?? currency)}</span> : <><span className="text-sm text-amber-700">Unavailable</span><p className="max-w-56 text-xs text-slate-400">{provider.error ?? 'Could not retrieve balance'}</p></>}</div>
+          </div>)}
+        </div>
+      </div>}
     </div>
   </section>;
 }
