@@ -274,13 +274,23 @@ function BalanceSection({ wallets, providerBalances, currency }) {
         <div><p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Customer wallets <span className="font-normal normal-case tracking-normal">· {formatNumber(wallets.walletCount)} wallets</span></p><p className="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{formatCurrency(wallets.totalBalance, wallets.currency ?? currency)}</p></div>
         <div className="flex gap-8 text-sm"><div><p className="text-xs text-slate-500">Main</p><p className="mt-1 font-semibold text-slate-800 dark:text-slate-100">{formatCurrency(wallets.mainBalance, wallets.currency ?? currency)}</p></div><div><p className="text-xs text-slate-500">Referral</p><p className="mt-1 font-semibold text-slate-800 dark:text-slate-100">{formatCurrency(wallets.referralBalance, wallets.currency ?? currency)}</p></div></div>
       </div>}
-      {providers.length > 0 && <div className="px-5 py-4 sm:px-6">
-        <div className="mb-1 flex items-center justify-between"><h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">Provider wallets</h3><span className="text-xs text-slate-400">NGN</span></div>
-        <div className="grid gap-x-8 sm:grid-cols-2 lg:grid-cols-3">
-          {providers.map((provider) => <div key={provider.provider} className="flex min-w-0 items-center justify-between gap-3 border-b border-slate-100 py-3 dark:border-slate-800">
-            <div className="min-w-0"><p className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">{labels[provider.provider] || provider.provider}</p><p className="mt-0.5 text-xs text-slate-400">{provider.source === 'transaction' ? 'Last transaction · ' : 'Checked · '}{formatDate(provider.checkedAt)}{provider.source === 'transaction' ? ' · May be out of date' : ''}</p></div>
-            <div className="shrink-0 text-right">{provider.available ? <span className="text-sm font-bold tabular-nums text-slate-900 dark:text-white">{formatCurrency(provider.balance, provider.currency ?? currency)}</span> : <><span className="text-sm font-medium text-amber-600 dark:text-amber-400">Unavailable</span><p className="max-w-40 text-xs text-slate-400">{provider.error || 'Could not retrieve balance'}</p></>}</div>
-          </div>)}
+      {providers.length > 0 && <div className="px-5 py-5 sm:px-6">
+        <div className="mb-4 flex items-center justify-between"><h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">Provider wallets</h3><span className="text-xs text-slate-400">NGN</span></div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          {providers.map((provider, index) => {
+            const colors = [
+              'border-orange-200 bg-orange-50 dark:border-orange-500/20 dark:bg-orange-500/10',
+              'border-violet-200 bg-violet-50 dark:border-violet-500/20 dark:bg-violet-500/10',
+              'border-amber-200 bg-amber-50 dark:border-amber-500/20 dark:bg-amber-500/10',
+              'border-indigo-200 bg-indigo-50 dark:border-indigo-500/20 dark:bg-indigo-500/10',
+              'border-rose-200 bg-rose-50 dark:border-rose-500/20 dark:bg-rose-500/10',
+            ];
+            const lowBalance = provider.available && Number.isFinite(Number(provider.balance)) && Number(provider.balance) < 2000;
+            return <div key={provider.provider} className={'min-w-0 rounded-xl border px-4 py-4 ' + (lowBalance ? 'border-red-300 bg-red-100 dark:border-red-500/40 dark:bg-red-500/20' : colors[index % colors.length])}>
+              <div className="flex items-start justify-between gap-2"><p className="truncate text-xs font-semibold text-slate-600 dark:text-slate-300">{labels[provider.provider] || provider.provider}</p>{provider.source === 'transaction' && <span title={'Recorded ' + formatDate(provider.checkedAt) + '; may be out of date'} aria-label="Recorded transaction balance, may be out of date" className="shrink-0 text-xs text-slate-400">•</span>}</div>
+              {provider.available ? <p className={"mt-3 text-lg font-bold tabular-nums tracking-tight " + (lowBalance ? "text-red-700 dark:text-red-300" : "text-slate-900 dark:text-white")}>{formatCurrency(provider.balance, provider.currency ?? currency)}</p> : <p className="mt-3 text-sm font-semibold text-amber-700 dark:text-amber-400" title={provider.error || 'Could not retrieve balance'}>Unavailable</p>}
+            </div>;
+          })}
         </div>
       </div>}
       {!wallets && providers.length === 0 && <p className="px-6 py-5 text-sm text-slate-500">Balance information is currently unavailable.</p>}
