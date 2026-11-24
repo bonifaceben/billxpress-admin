@@ -1,3 +1,4 @@
+import DailyNotificationSchedule from '../components/DailyNotificationSchedule';
 import ResponsiveTable from '../components/ResponsiveTable';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -404,6 +405,7 @@ export default function Notifications() {
         </div>
       )}
 
+      <DailyNotificationSchedule />
       <FilterBar onSearch={handleSearch} />
 
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
