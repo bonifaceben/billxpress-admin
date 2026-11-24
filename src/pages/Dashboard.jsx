@@ -266,25 +266,24 @@ function EarningsChartSection({ series, currency }) {
 
 function BalanceSection({ wallets, providerBalances, currency }) {
   const providers = Object.values(providerBalances ?? {});
-
+  const labels = { smeapi: 'SMEAPI', smeplug: 'SMEPlug', smartcash: 'Smartcash', quicklysim: 'QuicklySIM', uniteddata2: 'United Data' };
   return <section className="mb-8">
-    <div className="mb-4"><h2 className="text-sm font-semibold text-gray-900">Balance Overview</h2><p className="mt-0.5 text-xs text-gray-400">Customer liabilities and external provider funds.</p></div>
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-      {!wallets && providers.length === 0 && <div className="col-span-full rounded-2xl border border-dashed border-amber-300 bg-amber-50 p-5 dark:border-amber-800 dark:bg-amber-950/30"><p className="font-medium text-amber-800 dark:text-amber-300">Balance data is not available</p><p className="mt-1 text-sm text-amber-700 dark:text-amber-400">The current API response does not include <code>wallets</code> or <code>providerBalances</code>. Refresh after the updated backend is deployed.</p></div>}
-      {wallets && <div className="relative overflow-hidden rounded-2xl border border-indigo-500 bg-gradient-to-br from-indigo-600 to-violet-700 p-5 text-white shadow-lg shadow-indigo-500/15">
-        <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-white/10" />
-        <div className="relative"><div className="flex items-start justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-wider text-indigo-200">Customer Wallet Balance</p><p className="mt-2 text-3xl font-bold tracking-tight">{formatCurrency(wallets.totalBalance, wallets.currency ?? currency)}</p></div><span className="rounded-full bg-white/15 px-2.5 py-1 text-xs font-medium">{formatNumber(wallets.walletCount)} wallets</span></div>
-        <div className="mt-5 grid grid-cols-2 gap-3 border-t border-white/15 pt-4"><div><p className="text-xs text-indigo-200">Main wallets</p><p className="mt-1 font-semibold">{formatCurrency(wallets.mainBalance, wallets.currency ?? currency)}</p></div><div><p className="text-xs text-indigo-200">Referral wallets</p><p className="mt-1 font-semibold">{formatCurrency(wallets.referralBalance, wallets.currency ?? currency)}</p></div></div></div>
+    <div className="mb-4"><h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Balance overview</h2><p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Customer funds and provider balances in one place.</p></div>
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      {wallets && <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-4 border-b border-slate-100 px-5 py-4 dark:border-slate-800 sm:px-6">
+        <div><p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Customer wallets <span className="font-normal normal-case tracking-normal">· {formatNumber(wallets.walletCount)} wallets</span></p><p className="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{formatCurrency(wallets.totalBalance, wallets.currency ?? currency)}</p></div>
+        <div className="flex gap-8 text-sm"><div><p className="text-xs text-slate-500">Main</p><p className="mt-1 font-semibold text-slate-800 dark:text-slate-100">{formatCurrency(wallets.mainBalance, wallets.currency ?? currency)}</p></div><div><p className="text-xs text-slate-500">Referral</p><p className="mt-1 font-semibold text-slate-800 dark:text-slate-100">{formatCurrency(wallets.referralBalance, wallets.currency ?? currency)}</p></div></div>
       </div>}
-      {providers.length > 0 && <div className="md:col-span-2 rounded-xl border border-slate-200 bg-white px-5 py-4 dark:border-slate-800 dark:bg-slate-900">
-        <h3 className="mb-2 text-sm font-semibold text-slate-900 dark:text-slate-100">API balances</h3>
-        <div className="divide-y divide-slate-100 dark:divide-slate-800">
-          {providers.map((provider) => <div key={provider.provider} className="flex items-center justify-between gap-4 py-3">
-            <div><p className="text-sm font-medium uppercase text-slate-700 dark:text-slate-200">{provider.provider}</p><p className="text-xs text-slate-400">{provider.source === 'transaction' ? 'Last transaction: ' : 'Checked: '}{formatDate(provider.checkedAt)}{provider.source === 'transaction' ? ' · May be out of date' : ''}</p></div>
-            <div className="text-right">{provider.available ? <span className="text-base font-semibold tabular-nums text-slate-900 dark:text-slate-100">{formatCurrency(provider.balance, provider.currency ?? currency)}</span> : <><span className="text-sm text-amber-700">Unavailable</span><p className="max-w-56 text-xs text-slate-400">{provider.error ?? 'Could not retrieve balance'}</p></>}</div>
+      {providers.length > 0 && <div className="px-5 py-4 sm:px-6">
+        <div className="mb-1 flex items-center justify-between"><h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">Provider wallets</h3><span className="text-xs text-slate-400">NGN</span></div>
+        <div className="grid gap-x-8 sm:grid-cols-2 lg:grid-cols-3">
+          {providers.map((provider) => <div key={provider.provider} className="flex min-w-0 items-center justify-between gap-3 border-b border-slate-100 py-3 dark:border-slate-800">
+            <div className="min-w-0"><p className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">{labels[provider.provider] || provider.provider}</p><p className="mt-0.5 text-xs text-slate-400">{provider.source === 'transaction' ? 'Last transaction · ' : 'Checked · '}{formatDate(provider.checkedAt)}{provider.source === 'transaction' ? ' · May be out of date' : ''}</p></div>
+            <div className="shrink-0 text-right">{provider.available ? <span className="text-sm font-bold tabular-nums text-slate-900 dark:text-white">{formatCurrency(provider.balance, provider.currency ?? currency)}</span> : <><span className="text-sm font-medium text-amber-600 dark:text-amber-400">Unavailable</span><p className="max-w-40 text-xs text-slate-400">{provider.error || 'Could not retrieve balance'}</p></>}</div>
           </div>)}
         </div>
       </div>}
+      {!wallets && providers.length === 0 && <p className="px-6 py-5 text-sm text-slate-500">Balance information is currently unavailable.</p>}
     </div>
   </section>;
 }
